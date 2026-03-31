@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesCommander — Agent Team</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base: #06090f;
+  --bg-surface: #0c1019;
+  --bg-raised: #111723;
+  --bg-overlay: #161e2e;
+  --bg-active: #1c2740;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.14);
+  --text-primary: #e8ecf4;
+  --text-secondary: #dde3ec;
+  --text-muted: #556478;
+  --text-inverse: #06090f;
+  --accent: #4f7df5;
+  --accent-dim: rgba(79,125,245,0.12);
+  --accent-mid: rgba(79,125,245,0.25);
+  --green: #2fce7e;
+  --green-dim: rgba(47,206,126,0.12);
+  --yellow: #e5a93d;
+  --yellow-dim: rgba(229,169,61,0.12);
+  --red: #e5534b;
+  --red-dim: rgba(229,83,75,0.12);
+  --orange: #d4762c;
+  --orange-dim: rgba(212,118,44,0.12);
+  --purple: #9775f5;
+  --purple-dim: rgba(151,117,245,0.12);
+  --cyan: #3dc9d6;
+  --cyan-dim: rgba(61,201,214,0.12);
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px var(--border-subtle);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.5);
+  --transition: 0.15s ease;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body { font-family:var(--sans); background:var(--bg-base); color:var(--text-primary); font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased; overflow:hidden; }
+a { color:inherit; text-decoration:none; }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:3px; }
+
+/* ── NAVBAR ── */
+.navbar { height:52px; background:var(--bg-surface); border-bottom:1px solid var(--border-default); display:flex; align-items:center; justify-content:space-between; padding:0 24px; flex-shrink:0; z-index:50; }
+.navbar-brand h1 { font-size:15px; font-weight:700; letter-spacing:-0.4px; }
+.navbar-brand-sub { font-size:9.5px; font-weight:600; color:var(--text-muted); letter-spacing:1.6px; text-transform:uppercase; margin-top:1px; }
+.navbar-actions { display:flex; align-items:center; gap:6px; }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:var(--radius-sm); font-size:11.5px; font-weight:600; cursor:pointer; border:1px solid var(--border-default); background:var(--bg-raised); color:var(--text-secondary); transition:all var(--transition); font-family:var(--sans); white-space:nowrap; }
+.btn:hover { background:var(--bg-overlay); border-color:var(--border-strong); color:var(--text-primary); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn-primary:hover { background:#3a6be0; }
+.btn-ghost { background:transparent; border-color:transparent; color:var(--text-secondary); }
+.btn-ghost:hover { background:var(--bg-raised); color:var(--text-primary); }
+.btn-sm { padding:4px 8px; font-size:10.5px; }
+.btn-danger { color:var(--red); border-color:transparent; background:transparent; }
+.btn-danger:hover { background:var(--red-dim); }
+
+/* ── PAGE LAYOUT ── */
+.page-layout { display:flex; height:calc(100vh - 52px); overflow:hidden; }
+.main-col { flex:1; min-width:0; overflow-y:auto; padding:20px 24px; scroll-behavior:smooth; }
+.sidebar-col { width:380px; min-width:380px; border-left:1px solid var(--border-default); display:flex; flex-direction:column; background:var(--bg-surface); }
+
+/* ── KPI ── */
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.kpi { background:var(--bg-raised); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px 18px; position:relative; overflow:hidden; transition:all var(--transition); }
+.kpi:hover { border-color:var(--border-default); }
+.kpi-stripe { position:absolute; top:0; left:0; right:0; height:2px; }
+.kpi-label { font-size:10.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.6px; text-transform:uppercase; }
+.kpi-value { font-family:var(--mono); font-size:24px; font-weight:700; margin:4px 0 2px; letter-spacing:-0.8px; }
+.kpi-sub { font-size:11px; color:var(--text-secondary); }
+
+/* ── PANEL ── */
+.panel { background:var(--bg-raised); border:1px solid var(--border-subtle); border-radius:var(--radius-md); overflow:hidden; margin-bottom:20px; }
+.panel-header { padding:12px 16px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.panel-title { font-size:12px; font-weight:600; letter-spacing:-0.1px; }
+.panel-meta { font-size:10.5px; color:var(--text-secondary); font-weight:500; }
+.panel-body { padding:14px 16px; }
+
+/* ── TOPOLOGY ── */
+.topo-layout { display:flex; align-items:center; justify-content:center; gap:0; padding:20px 8px; min-height:260px; }
+.topo-col { display:flex; flex-direction:column; gap:10px; }
+.topo-spokes { display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; width:56px; }
+.topo-spoke { width:56px; height:1px; border-top:1.5px dashed var(--border-strong); position:relative; }
+.topo-spoke::after { content:''; position:absolute; right:-2px; top:-4px; width:0; height:0; border-left:5px solid var(--border-strong); border-top:3px solid transparent; border-bottom:3px solid transparent; }
+
+.topo-node { background:var(--bg-overlay); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:8px 12px; cursor:pointer; transition:all var(--transition); display:flex; align-items:center; gap:8px; min-width:160px; user-select:none; }
+.topo-node:hover { border-color:var(--border-strong); background:var(--bg-active); }
+.topo-node.selected { border-color:var(--accent); background:var(--accent-dim); box-shadow:0 0 0 1px var(--accent); }
+.topo-node-icon { font-size:16px; width:22px; text-align:center; flex-shrink:0; }
+.topo-node-info { flex:1; min-width:0; }
+.topo-node-name { font-size:11.5px; font-weight:600; }
+.topo-node-role { font-size:9.5px; color:var(--text-muted); }
+.topo-node-status { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
+.topo-hub { width:88px; height:88px; border-radius:50%; background:var(--accent-dim); border:2px solid var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all var(--transition); flex-shrink:0; }
+.topo-hub:hover { background:var(--accent-mid); }
+.topo-hub.selected { box-shadow:0 0 0 3px rgba(79,125,245,0.3); }
+.topo-hub-icon { font-size:24px; }
+.topo-hub-label { font-size:9px; font-weight:700; color:var(--accent); letter-spacing:0.8px; text-transform:uppercase; margin-top:2px; }
+.topo-bottom { display:flex; justify-content:center; margin-top:10px; }
+
+/* ── AGENT CARDS ── */
+.agent-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.agent-card { background:var(--bg-raised); border:1px solid var(--border-subtle); border-radius:var(--radius-md); overflow:hidden; cursor:pointer; transition:all 0.2s ease; position:relative; }
+.agent-card:hover { border-color:var(--border-default); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+.agent-card.selected { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 8px 24px rgba(0,0,0,0.3); }
+.agent-card-stripe { height:2px; }
+.agent-card-body { padding:16px; }
+.agent-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.agent-card-id { display:flex; align-items:center; gap:10px; }
+.agent-card-icon { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.agent-card-name { font-size:13px; font-weight:700; letter-spacing:-0.2px; }
+.agent-card-role { font-size:10.5px; color:var(--text-muted); margin-top:1px; }
+.agent-card-status { font-size:10.5px; font-weight:600; display:flex; align-items:center; gap:4px; }
+.agent-card-desc { font-size:12px; color:var(--text-secondary); line-height:1.55; margin-bottom:12px; }
+.agent-card-tags { display:flex; gap:5px; flex-wrap:wrap; }
+.tag-pill { padding:2px 8px; border-radius:10px; font-size:10px; font-weight:500; background:var(--bg-active); color:var(--text-muted); border:1px solid var(--border-subtle); }
+
+/* ── FILTER BAR ── */
+.filter-bar { display:flex; align-items:center; justify-content:space-between; padding:10px 0; margin-bottom:8px; }
+.filter-label { font-size:11px; font-weight:600; color:var(--text-secondary); display:flex; align-items:center; gap:6px; }
+.filter-label span { color:var(--accent); }
+.filter-clear { font-size:10.5px; }
+
+/* ── INTEL OUTPUT ── */
+#intel-scroll { max-height:500px; overflow-y:auto; }
+.intel-entry { padding:14px 16px; border-bottom:1px solid var(--border-subtle); }
+.intel-entry:last-child { border-bottom:none; }
+.intel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.intel-agent { display:flex; align-items:center; gap:8px; }
+.intel-agent-icon { font-size:14px; }
+.intel-agent-name { font-size:12px; font-weight:700; }
+.intel-agent-dot { width:6px; height:6px; border-radius:50%; }
+.intel-ts { font-family:var(--mono); font-size:10.5px; color:var(--text-muted); font-weight:500; white-space:nowrap; }
+.intel-type { display:inline-block; padding:2px 8px; border-radius:10px; font-size:9.5px; font-weight:600; background:var(--bg-active); color:var(--text-muted); margin-bottom:8px; }
+.intel-text { font-size:12px; color:var(--text-secondary); line-height:1.6; white-space:pre-wrap; }
+
+/* ── CHAT SIDEBAR ── */
+.chat-header { padding:12px 16px; border-bottom:1px solid var(--border-default); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.chat-header-title { font-size:13px; font-weight:600; }
+.chat-header-sub { font-size:10px; color:var(--text-muted); margin-top:1px; }
+.chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.chat-bubble { max-width:88%; padding:10px 14px; border-radius:var(--radius-md); font-size:12.5px; line-height:1.6; animation:chatIn 0.25s ease; }
+@keyframes chatIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+.chat-bubble.ai { background:var(--bg-overlay); border:1px solid var(--border-subtle); align-self:flex-start; border-bottom-left-radius:3px; }
+.chat-bubble.user { background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:3px; }
+.chat-sender { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:3px; color:var(--text-secondary); display:flex; align-items:center; gap:5px; }
+.chat-bubble.user .chat-sender { color:rgba(255,255,255,0.5); }
+.chat-text { white-space:pre-wrap; }
+.typing-dots { display:flex; gap:3px; padding:4px 0; }
+.typing-dot { width:5px; height:5px; border-radius:50%; background:var(--text-muted); animation:dotPulse 0.5s infinite alternate; }
+.typing-dot:nth-child(2) { animation-delay:0.12s; }
+.typing-dot:nth-child(3) { animation-delay:0.24s; }
+@keyframes dotPulse { from { opacity:0.3; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+.chat-input-bar { padding:12px 16px; border-top:1px solid var(--border-default); display:flex; gap:8px; flex-shrink:0; }
+.chat-input { flex:1; background:var(--bg-overlay); border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:9px 12px; color:var(--text-primary); font-size:12.5px; font-family:var(--sans); outline:none; }
+.chat-input:focus { border-color:var(--accent); }
+.chat-input::placeholder { color:var(--text-muted); }
+
+/* ── FOOTER ── */
+.page-footer { border-top:1px solid var(--border-subtle); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg-base); }
+.footer-brand { font-size:12px; font-weight:600; color:var(--text-muted); }
+.footer-brand span { color:var(--text-secondary); }
+.footer-links { display:flex; gap:16px; }
+.footer-link { font-size:11px; font-weight:500; color:var(--text-muted); transition:color var(--transition); }
+.footer-link:hover { color:var(--text-primary); }
+
+.hidden { display:none !important; }
+.empty-state { text-align:center; padding:32px 16px; color:var(--text-muted); font-size:12.5px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width:1200px) {
+  .sidebar-col { width:340px; min-width:340px; }
+}
+@media (max-width:900px) {
+  body { overflow:auto; }
+  .page-layout { flex-direction:column; height:auto; }
+  .main-col { overflow:visible; }
+  .sidebar-col { width:100%; min-width:0; border-left:none; border-top:1px solid var(--border-default); height:500px; }
+  .page-footer { order:3; }
+}
+@media (max-width:768px) {
+  .kpi-row { grid-template-columns:repeat(2,1fr); }
+  .agent-grid { grid-template-columns:1fr; }
+  .topo-layout { flex-direction:column; gap:6px; min-height:auto; padding:12px 8px; }
+  .topo-spokes { display:none; }
+  .topo-col { flex-direction:row; flex-wrap:wrap; justify-content:center; gap:6px; }
+  .topo-node { min-width:140px; }
+  .topo-hub { width:68px; height:68px; }
+  .topo-hub-icon { font-size:20px; }
+  .navbar { padding:0 16px; }
+  .main-col { padding:16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <h1>SalesCommander</h1>
+    <div class="navbar-brand-sub">Agent Team</div>
+  </div>
+  <div class="navbar-actions">
+    <a href="index.html" class="btn btn-ghost">Home</a>
+    <a href="sales_commander_main.html" class="btn btn-ghost">App</a>
+    <a href="login.html" class="btn btn-danger" onclick="localStorage.clear()">Sign Out</a>
+  </div>
+</nav>
+
+<!-- ═══ PAGE LAYOUT ═══ -->
+<div class="page-layout">
+
+  <!-- ── LEFT COLUMN ── -->
+  <div class="main-col" id="main-col">
+
+    <!-- 1. KPI BAR -->
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-stripe" style="background:var(--accent)"></div><div class="kpi-label">Total Agents</div><div class="kpi-value" style="color:var(--accent)">7</div><div class="kpi-sub">Hub &amp; spoke architecture</div></div>
+      <div class="kpi"><div class="kpi-stripe" style="background:var(--green)"></div><div class="kpi-label">Active</div><div class="kpi-value" style="color:var(--green)">3</div><div class="kpi-sub">Processing requests</div></div>
+      <div class="kpi"><div class="kpi-stripe" style="background:var(--border-strong)"></div><div class="kpi-label">Standby</div><div class="kpi-value">4</div><div class="kpi-sub">Available on demand</div></div>
+      <div class="kpi"><div class="kpi-stripe" style="background:var(--yellow)"></div><div class="kpi-label">Interactions</div><div class="kpi-value" style="color:var(--yellow)" id="kpi-interactions">8</div><div class="kpi-sub">Intel entries logged</div></div>
+    </div>
+
+    <!-- 2. TOPOLOGY -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Agent Topology</span><span class="panel-meta">Hub &amp; spoke architecture</span></div>
+      <div class="panel-body" id="topology-panel"></div>
+    </div>
+
+    <!-- 3. AGENT CARDS -->
+    <div id="agent-cards-grid"></div>
+
+    <!-- 4. FILTER BAR -->
+    <div class="filter-bar" id="filter-bar"></div>
+
+    <!-- 5. INTEL OUTPUT -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Agent Intel Output</span><span class="panel-meta">Work product &amp; results</span></div>
+      <div id="intel-scroll"></div>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT COLUMN: CHAT ── -->
+  <div class="sidebar-col" id="chat-sidebar">
+    <div class="chat-header">
+      <div><div class="chat-header-title">Agent Conversation</div><div class="chat-header-sub">Multi-agent thread</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="clearChat()">Clear</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-bar">
+      <input class="chat-input" id="chat-input" placeholder="Ask the agent team..." onkeydown="if(event.key==='Enter')sendMessage()">
+      <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="page-footer">
+  <div class="footer-brand"><span>SalesCommander</span> · © 2026</div>
+  <div class="footer-links">
+    <a href="index.html" class="footer-link">Home</a>
+    <a href="sales_commander_main.html" class="footer-link">App</a>
+    <a href="login.html" class="footer-link">Sign In</a>
+  </div>
+</footer>
+
+<script>
+/* ══════════════════════════════════════
+   DATA
+   ══════════════════════════════════════ */
+
+const AGENTS = [
+  { id:'router', name:'Router', icon:'🔀', color:'var(--accent)', colorDim:'var(--accent-dim)', role:'Orchestrator', status:'active', desc:'Classifies user input and dispatches to the correct specialist agent. Orchestrates multi-agent workflows.', tags:['dispatch','classify','coordinate'] },
+  { id:'copilot', name:'Copilot', icon:'⚡', color:'var(--yellow)', colorDim:'var(--yellow-dim)', role:'Deal Coach', status:'active', desc:'Deal-specific Sandler coaching. Analyzes qualification gaps, generates coaching actions, and runs AI-powered deal conversations.', tags:['sandler','qualification','coaching'] },
+  { id:'sales-mgr', name:'Sales Manager', icon:'📊', color:'var(--green)', colorDim:'var(--green-dim)', role:'Team Analyst', status:'active', desc:'Rep analysis, 1:1 agenda generation, pipeline risk assessment, and forecast intelligence. Context-aware with pronoun resolution.', tags:['reps','forecast','pipeline'] },
+  { id:'game-theory', name:'Game Theory', icon:'♟️', color:'var(--purple)', colorDim:'var(--purple-dim)', role:'Strategist', status:'standby', desc:'Applies game theory frameworks to messaging and marketing strategy. Optimizes conversion through strategic positioning.', tags:['conversion','positioning','messaging'] },
+  { id:'rewards', name:'Rewards', icon:'🏆', color:'var(--orange)', colorDim:'var(--orange-dim)', role:'Motivator', status:'standby', desc:'Gamification engine for rep motivation. Designs incentive structures, tracks streaks, and delivers behavioral nudges.', tags:['incentives','gamification','behavior'] },
+  { id:'signals', name:'Signals', icon:'📡', color:'var(--cyan)', colorDim:'var(--cyan-dim)', role:'Monitor', status:'standby', desc:'Monitors social media and online sources for target account activity. Generates real-time opportunity alerts from external signals.', tags:['social','alerts','monitoring'] },
+  { id:'research', name:'Research', icon:'🔬', color:'var(--red)', colorDim:'var(--red-dim)', role:'Researcher', status:'standby', desc:'Performs market research on accounts, industries, and competitive landscape. Enriches deal intelligence with external data.', tags:['market','competitive','intelligence'] }
+];
+
+const INTEL_ENTRIES = [
+  { agentId:'research', ts:'Mar 12, 2026 · 2:14 PM', type:'Research Summary', text:'Meridian Healthcare operates in a $48B hospital IT market growing at 7.2% CAGR. Their primary competitor HealthTech Solutions raised Series C ($120M) in Q4 2025. Key differentiator: Meridian\'s compliance automation reduces audit prep from 200+ hours to under 40. Three comparable deals closed in this vertical at $250K-$320K range. Recommended positioning: lead with compliance cost savings and cite the $1.2M annual impact figure already captured in Sandler.' },
+  { agentId:'signals', ts:'Mar 12, 2026 · 1:48 PM', type:'Signal Alert', text:'NorthStar Defense VP Engineering posted on LinkedIn about evaluating new procurement systems for FY26 Q2. Post received engagement from their Director of Ops (our secondary contact). This aligns with the deal timeline already in pipeline. Recommended action: Copilot should update the deal messaging plan to reference Q2 procurement window.' },
+  { agentId:'game-theory', ts:'Mar 12, 2026 · 12:30 PM', type:'Strategy Analysis', text:'Pinnacle Logistics — Nash equilibrium analysis suggests the incumbent will match on price but cannot match on implementation speed. Optimal strategy: frame the decision as a time-cost tradeoff rather than a price comparison. If we anchor on 6-week implementation vs. incumbent\'s 16-week timeline, the prospect\'s cost-of-delay ($180K) exceeds our price premium. Recommend coalition approach: secure CTO buy-in first, then use technical validation to neutralize procurement\'s price objection.' },
+  { agentId:'copilot', ts:'Mar 12, 2026 · 11:45 AM', type:'Coaching Recommendation', text:'Atlas Manufacturing — Sarah Chen needs to identify the economic buyer before sending the revised proposal. The Director of IT is a champion but lacks budget authority. Coach Sarah to ask: "Who else needs to sign off before this moves forward?" and push for a direct introduction to the CFO or VP Finance. Proposal should not go out until this is confirmed.' },
+  { agentId:'rewards', ts:'Mar 12, 2026 · 10:20 AM', type:'Incentive Update', text:'Marcus Webb has maintained a 14-day activity streak — longest on the team. Current trajectory puts him at 108% quota attainment by Q1 close. Recommended: assign a stretch goal of $520K with a bonus multiplier at 110%. This preserves momentum without creating sandbagging risk. Also flag for team recognition in the next all-hands.' },
+  { agentId:'sales-mgr', ts:'Mar 12, 2026 · 9:05 AM', type:'Coaching Recommendation', text:'Tom Richter daily calls at 72 vs. 100 target (72%). Pipeline at $290K with 1.6x coverage — below the 2.0x minimum. Declining trend for 2 consecutive weeks. Root cause assessment: Tom is spending disproportionate time on Richter Lead Corp ($130K, Qualification, 7 days, low engagement). Recommendation: force a go/no-go decision on Richter Lead Corp by Friday. Redirect time to prospecting sprint — target 15 new outbound calls per day for the next 5 business days.' },
+  { agentId:'copilot', ts:'Mar 11, 2026 · 4:30 PM', type:'Coaching Recommendation', text:'Vertex Financial — Marcus Webb has verbal commit and CFO alignment. Legal review is the last gate. Coach Marcus to confirm: (1) MSA redlines are minor, (2) no procurement committee surprises, (3) signature authority is confirmed with CFO David Kim. Target close by Mar 18 as committed.' },
+  { agentId:'research', ts:'Mar 11, 2026 · 3:15 PM', type:'Research Summary', text:'Solara Energy vertical scan complete. Market is consolidating — 3 acquisitions in the last 6 months. Solara\'s parent company announced a strategic review in Q4 2025. Risk: budget freeze likely if restructuring accelerates. Opportunity: if we position as a cost-reduction platform, we align with the efficiency mandate that typically follows strategic reviews. Recommend surfacing this intel to Copilot for Priya\'s qualification call.' }
+];
+
+const SEED_CHAT = [
+  { role:'ai', agentId:'router', text:'Welcome to the Agent Team console. You can ask any question — I\'ll route it to the right specialist.\n\nTry: "What\'s the risk on our pipeline?" · "Research Meridian Healthcare" · "Coaching priorities for today"' },
+  { role:'user', text:'What should I focus on this morning?' },
+  { role:'ai', agentId:'sales-mgr', text:'Morning priorities based on current data:\n\n1. Atlas Manufacturing ($192K) — proposal overdue. Sarah Chen needs to send revised proposal today. Economic buyer still unconfirmed.\n2. Tom Richter — activity 28% below target for 3 consecutive days. Schedule a 1:1 before noon.\n3. Solara Energy ($420K) — stalled 18 days with no champion. Push Priya for a qualify/kill decision by Friday.\n\nBright spot: Marcus Webb tracking to overachieve at 86% quota with 3 weeks left.' }
+];
+
+/* ══════════════════════════════════════
+   STATE
+   ══════════════════════════════════════ */
+
+const state = {
+  selectedAgent: null,
+  chatMessages: [...SEED_CHAT]
+};
+
+function agentById(id) { return AGENTS.find(a => a.id === id); }
+function escapeHTML(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ══════════════════════════════════════
+   AGENT SELECTION
+   ══════════════════════════════════════ */
+
+function selectAgent(id) {
+  if (state.selectedAgent === id || id === 'router') {
+    state.selectedAgent = null;
+  } else {
+    state.selectedAgent = id;
+  }
+  renderTopology();
+  renderCards();
+  renderFilter();
+  renderIntel();
+}
+
+/* ══════════════════════════════════════
+   RENDER: TOPOLOGY
+   ══════════════════════════════════════ */
+
+function renderTopology() {
+  const sel = state.selectedAgent;
+  const left = AGENTS.filter(a => ['copilot','sales-mgr','game-theory'].includes(a.id));
+  const right = AGENTS.filter(a => ['rewards','signals','research'].includes(a.id));
+  const router = agentById('router');
+
+  function node(a) {
+    const isSel = sel === a.id;
+    const statusColor = a.status === 'active' ? 'var(--green)' : 'var(--text-muted)';
+    return `<div class="topo-node${isSel?' selected':''}" onclick="selectAgent('${a.id}')">
+      <span class="topo-node-icon">${a.icon}</span>
+      <div class="topo-node-info"><div class="topo-node-name">${a.name}</div><div class="topo-node-role">${a.role}</div></div>
+      <div class="topo-node-status" style="background:${statusColor}"></div>
+    </div>`;
+  }
+
+  const spoke = `<div class="topo-spoke"></div>`;
+
+  document.getElementById('topology-panel').innerHTML = `
+    <div class="topo-layout">
+      <div class="topo-col">${left.map(node).join('')}</div>
+      <div class="topo-spokes">${spoke}${spoke}${spoke}</div>
+      <div class="topo-hub${sel===null?' ':''}" onclick="selectAgent('router')">
+        <div class="topo-hub-icon">${router.icon}</div>
+        <div class="topo-hub-label">Router</div>
+      </div>
+      <div class="topo-spokes" style="transform:scaleX(-1)">${spoke}${spoke}${spoke}</div>
+      <div class="topo-col">${right.map(node).join('')}</div>
+    </div>
+    <div class="topo-bottom">${node(AGENTS[3])}</div>`;
+  // Fix: bottom node is the 7th agent that doesn't fit — but we have 7 agents and 6 in left+right.
+  // Actually left has copilot, sales-mgr, game-theory (3) and right has rewards, signals, research (3) = 6 + router hub = 7. All accounted for.
+  // Remove the bottom node since all 6 specialists are in left/right and router is the hub.
+  document.getElementById('topology-panel').innerHTML = `
+    <div class="topo-layout">
+      <div class="topo-col">${left.map(node).join('')}</div>
+      <div class="topo-spokes">${spoke}${spoke}${spoke}</div>
+      <div class="topo-hub${sel===null?'':''}" onclick="selectAgent('router')">
+        <div class="topo-hub-icon">${router.icon}</div>
+        <div class="topo-hub-label">Router</div>
+      </div>
+      <div class="topo-spokes" style="transform:scaleX(-1)">${spoke}${spoke}${spoke}</div>
+      <div class="topo-col">${right.map(node).join('')}</div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════
+   RENDER: AGENT CARDS
+   ══════════════════════════════════════ */
+
+function renderCards() {
+  const sel = state.selectedAgent;
+  const nonRouter = AGENTS.filter(a => a.id !== 'router');
+  document.getElementById('agent-cards-grid').innerHTML = `<div class="agent-grid">${nonRouter.map(a => {
+    const isSel = sel === a.id;
+    const statusDot = a.status === 'active' ? `<span style="color:var(--green)">● Active</span>` : `<span style="color:var(--text-muted)">○ Standby</span>`;
+    return `<div class="agent-card${isSel?' selected':''}" onclick="selectAgent('${a.id}')">
+      <div class="agent-card-stripe" style="background:${a.color}"></div>
+      <div class="agent-card-body">
+        <div class="agent-card-top">
+          <div class="agent-card-id">
+            <div class="agent-card-icon" style="background:${a.colorDim}">${a.icon}</div>
+            <div><div class="agent-card-name">${a.name}</div><div class="agent-card-role">${a.role}</div></div>
+          </div>
+          <div class="agent-card-status">${statusDot}</div>
+        </div>
+        <div class="agent-card-desc">${a.desc}</div>
+        <div class="agent-card-tags">${a.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ══════════════════════════════════════
+   RENDER: FILTER BAR
+   ══════════════════════════════════════ */
+
+function renderFilter() {
+  const sel = state.selectedAgent;
+  const a = sel ? agentById(sel) : null;
+  document.getElementById('filter-bar').innerHTML = a
+    ? `<div class="filter-label">Showing: <span>${a.icon} ${a.name}</span></div><button class="btn btn-ghost btn-sm filter-clear" onclick="selectAgent('${a.id}')">✕ Clear filter</button>`
+    : `<div class="filter-label">Showing: All Agents</div>`;
+}
+
+/* ══════════════════════════════════════
+   RENDER: INTEL OUTPUT
+   ══════════════════════════════════════ */
+
+function renderIntel() {
+  const sel = state.selectedAgent;
+  const entries = sel ? INTEL_ENTRIES.filter(e => e.agentId === sel) : INTEL_ENTRIES;
+  if (!entries.length) {
+    document.getElementById('intel-scroll').innerHTML = `<div class="empty-state">No intel entries for this agent.</div>`;
+    return;
+  }
+  document.getElementById('intel-scroll').innerHTML = entries.map(e => {
+    const a = agentById(e.agentId);
+    return `<div class="intel-entry">
+      <div class="intel-header">
+        <div class="intel-agent">
+          <span class="intel-agent-icon">${a.icon}</span>
+          <span class="intel-agent-name">${a.name}</span>
+          <span class="intel-agent-dot" style="background:${a.color}"></span>
+        </div>
+        <span class="intel-ts">${e.ts}</span>
+      </div>
+      <span class="intel-type">${e.type}</span>
+      <div class="intel-text">${escapeHTML(e.text)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   RENDER: CHAT
+   ══════════════════════════════════════ */
+
+function renderChat() {
+  const el = document.getElementById('chat-messages');
+  el.innerHTML = state.chatMessages.map(m => {
+    if (m.role === 'user') {
+      return `<div class="chat-bubble user"><div class="chat-sender">You</div><div class="chat-text">${escapeHTML(m.text)}</div></div>`;
+    }
+    const a = agentById(m.agentId) || agentById('router');
+    return `<div class="chat-bubble ai"><div class="chat-sender">${a.icon} ${a.name}</div><div class="chat-text">${escapeHTML(m.text)}</div></div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function showTyping() {
+  const el = document.getElementById('chat-messages');
+  el.innerHTML += `<div class="chat-bubble ai" id="typing-indicator"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+/* ══════════════════════════════════════
+   CHAT: SEND & ROUTE
+   ══════════════════════════════════════ */
+
+const RESPONSES = {
+  'sales-mgr': [
+    'Pipeline risk assessment:\n\n• Solara Energy ($420K) — stalled 18 days, no champion identified. High risk of going dark. Push Priya to schedule a qualification call by Thursday or kill the deal.\n• Tom Richter — activity trending 28% below target. 1.6x coverage is dangerously low. Recommend a prospecting sprint: 15 outbound calls/day for 5 days.\n• Bright spot: Marcus Webb at 86% quota with Vertex Financial ($310K) in legal review. On track to close by Mar 18.',
+    'Team performance snapshot:\n\nSarah Chen — 4 active deals, $612K pipeline, 2.1x coverage. Strong qualifier but slow on follow-through. Atlas Manufacturing proposal is 3 days overdue.\nMarcus Webb — 3 active deals, $485K pipeline, 2.8x coverage. Top performer this quarter. Vertex Financial close expected by Mar 18.\nTom Richter — 5 active deals, $290K pipeline, 1.6x coverage. Activity is a concern. 72 daily calls vs. 100 target.\nPriya Patel — 3 active deals, $580K pipeline, 1.9x coverage. Solara Energy needs an urgent qualify/kill decision.',
+    'Recommended 1:1 agenda for Tom Richter:\n\n1. Activity gap — 72 vs. 100 calls (72%). What\'s blocking output?\n2. Richter Lead Corp — $130K deal with low engagement. Go/no-go decision needed by Friday.\n3. Pipeline coverage at 1.6x — below 2.0x minimum. Build a 5-day prospecting plan together.\n4. Set clear accountability: daily call target of 100, check-in tomorrow at 3 PM.'
+  ],
+  'research': [
+    'Market intelligence on Meridian Healthcare:\n\n• $48B hospital IT market, 7.2% CAGR\n• Competitor HealthTech Solutions raised $120M Series C in Q4 2025\n• Meridian differentiator: compliance automation reduces audit prep from 200+ hours to under 40\n• Comparable deal range: $250K-$320K in this vertical\n• Positioning recommendation: lead with compliance cost savings, cite $1.2M annual impact',
+    'Competitive landscape update:\n\nThree key trends emerging this quarter:\n1. Consolidation accelerating — 6 acquisitions in target verticals since Q4 2025\n2. Procurement cycles lengthening by 2-3 weeks on average across enterprise accounts\n3. Compliance-driven buying increasing — 40% of our pipeline now cites regulatory pressure as a primary driver\n\nRecommend adjusting messaging to lead with compliance ROI rather than efficiency gains.'
+  ],
+  'copilot': [
+    'Deal qualification for Atlas Manufacturing ($192K, Proposal stage):\n\nSandler assessment:\n• Pain: Confirmed — manual compliance tracking costing 200+ hours/quarter\n• Budget: Allocated — $200K approved for FY26\n• Decision: ⚠️ Gap — economic buyer not confirmed. Director of IT is champion but lacks budget authority\n• Timeline: Q1 close targeted but at risk\n\nCoaching action: Sarah Chen must confirm the economic buyer before sending the revised proposal. Push for CFO/VP Finance introduction this week.',
+    'Qualification update for Vertex Financial ($310K, Negotiation stage):\n\n• Pain: Strong — SEC reporting requirements creating urgency\n• Budget: Confirmed by CFO David Kim\n• Decision: Clear — CFO has signature authority\n• Timeline: Legal review in progress, target close Mar 18\n\nMarcus Webb has done excellent Sandler work on this deal. Final steps: confirm MSA redlines are minor, verify no procurement committee, get verbal signature commitment.'
+  ],
+  'game-theory': [
+    'Strategic analysis for your pricing conversation:\n\nNash equilibrium suggests the incumbent will match price but can\'t match implementation speed. Frame the decision as time-cost tradeoff:\n\n• Our implementation: 6 weeks\n• Incumbent: 16 weeks\n• Prospect\'s cost of delay: $180K (exceeds our price premium)\n\nOptimal play: anchor on speed-to-value, not price. Coalition approach — secure CTO technical buy-in first, then use that validation to neutralize procurement\'s price objection.',
+    'Conversion optimization analysis:\n\nCurrent pipeline shows 34% win rate. Game-theoretic modeling suggests two leverage points:\n1. Deals where we\'re the second vendor evaluated have 52% higher close rate — position as the "validation" choice\n2. Multi-threaded deals (3+ stakeholders engaged) close at 2.1x the rate of single-threaded deals\n\nRecommend prioritizing multi-threading on Solara Energy and Atlas Manufacturing.'
+  ],
+  'signals': [
+    'Social signal detected:\n\nNorthStar Defense VP Engineering posted on LinkedIn about evaluating new procurement systems for FY26 Q2. Their Director of Ops (our secondary contact) engaged with the post.\n\nThis aligns with our pipeline timeline. Recommended actions:\n1. Have Copilot update the deal messaging plan\n2. Reference the Q2 procurement window in next outreach\n3. Engage the Director of Ops post directly — adds social proof',
+    'Signal monitoring update:\n\n3 new signals detected this week:\n• Meridian Healthcare CTO shared an article on compliance automation — aligns with our positioning\n• Pinnacle Logistics posted a job for "Digital Transformation Lead" — indicates budget for new platforms\n• Atlas Manufacturing Director of IT updated their LinkedIn title — verify they haven\'t changed roles'
+  ],
+  'rewards': [
+    'Incentive engine update:\n\nMarcus Webb — 14-day activity streak, longest on the team. Tracking to 108% quota. Recommended stretch goal: $520K with bonus multiplier at 110%.\n\nTom Richter — streak broken at day 3. Consider a "comeback challenge" — bonus pool unlock for hitting 100 calls/day for 5 consecutive days.\n\nTeam-wide: Q1 close sprint contest. Top performer by Mar 31 gets first pick of Q2 territory assignments.',
+    'Gamification recommendations:\n\nCurrent team engagement is 68% (based on activity target adherence). To push to 80%:\n1. Introduce daily "Power Hour" — 60 minutes of uninterrupted calling with leaderboard\n2. Pair Tom with Marcus in a buddy challenge — Marcus\'s streak energy is transferable\n3. Weekly recognition in all-hands for highest conversion rate (not just volume)'
+  ],
+  'router': [
+    'I can route your question to the right specialist. Here\'s who\'s available:\n\n📊 Sales Manager — pipeline risk, rep performance, forecasting\n⚡ Copilot — deal coaching, Sandler qualification, proposals\n♟️ Game Theory — pricing strategy, competitive positioning\n📡 Signals — social monitoring, account activity alerts\n🏆 Rewards — incentives, gamification, rep motivation\n🔬 Research — market intelligence, competitive landscape\n\nWhat would you like to explore?'
+  ]
+};
+
+function routeMessage(text) {
+  const t = text.toLowerCase();
+  if (/pipeline|risk|forecast|coverage|quota/.test(t)) return 'sales-mgr';
+  if (/research|market|competitor|landscape|vertical|industry/.test(t)) return 'research';
+  if (/coaching|rep |sarah|marcus|tom |priya|richter|webb|chen|patel|1:1|one.on.one/.test(t)) return 'sales-mgr';
+  if (/strateg|pricing|conversion|game|nash|equilibrium|incumbent/.test(t)) return 'game-theory';
+  if (/signal|social|linkedin|news|monitor|alert/.test(t)) return 'signals';
+  if (/reward|streak|incentive|motiv|gamif|contest/.test(t)) return 'rewards';
+  if (/deal|sandler|qualif|atlas|vertex|solara|pinnacle|meridian|northstar|proposal/.test(t)) return 'copilot';
+  return 'router';
+}
+
+function getResponse(agentId) {
+  const pool = RESPONSES[agentId] || RESPONSES['router'];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  state.chatMessages.push({ role:'user', text });
+  renderChat();
+  input.value = '';
+
+  showTyping();
+
+  const agentId = routeMessage(text);
+
+  setTimeout(() => {
+    removeTyping();
+    state.chatMessages.push({ role:'ai', agentId, text: getResponse(agentId) });
+    renderChat();
+  }, 800);
+}
+
+function clearChat() {
+  state.chatMessages = [...SEED_CHAT];
+  renderChat();
+}
+
+/* ══════════════════════════════════════
+   INIT
+   ══════════════════════════════════════ */
+
+renderTopology();
+renderCards();
+renderFilter();
+renderIntel();
+renderChat();
+</script>
+
+</body>
+</html>
