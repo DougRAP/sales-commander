@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesCommander — Porter Strategy Hub</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♟️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   CSS — Matches SalesCommander dark terminal aesthetic exactly
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --bg-base: #06090f;
+  --bg-surface: #0c1019;
+  --bg-raised: #111723;
+  --bg-overlay: #161e2e;
+  --bg-active: #1c2740;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.14);
+  --text-primary: #f0f4fc;
+  --text-secondary: #e0e7f5;
+  --text-muted: #8a9ab8;
+  --text-inverse: #06090f;
+  --accent: #4f7df5;
+  --accent-dim: rgba(79,125,245,0.15);
+  --accent-mid: rgba(79,125,245,0.30);
+  --green: #2fce7e;
+  --green-dim: rgba(47,206,126,0.15);
+  --yellow: #e5a93d;
+  --yellow-dim: rgba(229,169,61,0.15);
+  --red: #e5534b;
+  --red-dim: rgba(229,83,75,0.15);
+  --orange: #d4762c;
+  --orange-dim: rgba(212,118,44,0.15);
+  --cyan: #3dc9d6;
+  --cyan-dim: rgba(61,201,214,0.15);
+  --purple: #9775f5;
+  --purple-dim: rgba(151,117,245,0.15);
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px var(--border-subtle);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.5);
+  --transition: 0.15s ease;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body { font-family:var(--sans); background:var(--bg-base); color:var(--text-primary); font-size:13.5px; line-height:1.65; -webkit-font-smoothing:antialiased; }
+a { color:inherit; text-decoration:none; }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:3px; }
+
+/* ── APP SHELL ── */
+.app { display:flex; height:100vh; overflow:hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar { width:240px; min-width:240px; background:var(--bg-surface); border-right:1px solid var(--border-default); display:flex; flex-direction:column; z-index:20; }
+.sidebar-brand { padding:20px 18px 16px; border-bottom:1px solid var(--border-default); }
+.sidebar-brand h1 { font-size:15px; font-weight:700; letter-spacing:-0.4px; }
+.sidebar-brand-sub { font-size:10px; font-weight:500; color:var(--text-secondary); letter-spacing:1.6px; text-transform:uppercase; margin-top:2px; }
+.sidebar-nav { flex:1; padding:8px 10px; display:flex; flex-direction:column; gap:1px; overflow-y:auto; }
+.nav-group-label { font-size:9.5px; font-weight:600; color:var(--text-secondary); letter-spacing:1.4px; text-transform:uppercase; padding:16px 8px 6px; }
+.nav-group-label:first-child { padding-top:4px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:var(--radius-sm); cursor:pointer; font-size:13px; font-weight:500; color:var(--text-secondary); transition:all var(--transition); user-select:none; }
+.nav-item:hover { background:var(--bg-raised); color:var(--text-primary); }
+.nav-item.active { background:var(--accent-dim); color:var(--accent); }
+.nav-icon { width:20px; text-align:center; font-size:14px; flex-shrink:0; }
+.sidebar-footer { padding:14px 18px; border-top:1px solid var(--border-default); }
+.sidebar-footer a { display:block; padding:7px 10px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; color:var(--text-secondary); transition:all var(--transition); }
+.sidebar-footer a:hover { background:var(--bg-raised); color:var(--text-primary); }
+
+/* ── MAIN AREA ── */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+.topbar { height:52px; border-bottom:1px solid var(--border-default); display:flex; align-items:center; justify-content:space-between; padding:0 24px; background:var(--bg-surface); flex-shrink:0; }
+.topbar-left { display:flex; align-items:center; gap:14px; }
+.topbar-title { font-size:14px; font-weight:600; letter-spacing:-0.2px; }
+.topbar-subtitle { font-size:11px; color:var(--text-secondary); font-weight:500; }
+.topbar-actions { display:flex; align-items:center; gap:8px; }
+.content { flex:1; overflow-y:auto; padding:20px 24px; scroll-behavior:smooth; }
+
+/* ── BUTTONS ── */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border-default); background:var(--bg-raised); color:var(--text-primary); transition:all var(--transition); font-family:var(--sans); white-space:nowrap; }
+.btn:hover { background:var(--bg-overlay); border-color:var(--border-strong); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn-primary:hover { background:#3a6be0; }
+.btn-ghost { background:transparent; border-color:transparent; color:var(--text-secondary); }
+.btn-ghost:hover { background:var(--bg-raised); color:var(--text-primary); }
+.btn-sm { padding:5px 10px; font-size:11px; }
+.btn-danger { color:var(--red); border-color:transparent; background:transparent; }
+.btn-danger:hover { background:var(--red-dim); }
+.btn-success { background:var(--green); border-color:var(--green); color:var(--text-inverse); }
+.btn-success:hover { background:#25b56e; }
+
+/* ── PANELS ── */
+.panel { background:var(--bg-raised); border:1px solid var(--border-subtle); border-radius:var(--radius-md); overflow:hidden; margin-bottom:20px; }
+.panel-header { padding:12px 16px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.panel-title { font-size:12px; font-weight:600; letter-spacing:-0.1px; }
+.panel-meta { font-size:10.5px; color:var(--text-secondary); font-weight:500; }
+.panel-body { padding:14px 16px; }
+
+/* ── KPI ROW ── */
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+.kpi-row.cols-4 { grid-template-columns:repeat(4,1fr); }
+.kpi-row.cols-3 { grid-template-columns:repeat(3,1fr); }
+.kpi { background:var(--bg-raised); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px 18px; position:relative; overflow:hidden; transition:all var(--transition); }
+.kpi:hover { border-color:var(--border-default); }
+.kpi-stripe { position:absolute; top:0; left:0; right:0; height:2px; }
+.kpi-label { font-size:10.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.6px; text-transform:uppercase; }
+.kpi-value { font-family:var(--mono); font-size:24px; font-weight:700; margin:4px 0 2px; letter-spacing:-0.8px; }
+.kpi-sub { font-size:11px; color:var(--text-secondary); }
+
+/* ── GRID LAYOUTS ── */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:20px; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom:14px; }
+.form-label { display:block; font-size:10.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.6px; text-transform:uppercase; margin-bottom:5px; }
+.form-input, .form-textarea, .form-select {
+  width:100%; background:var(--bg-overlay); border:1px solid var(--border-default);
+  border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-primary);
+  font-size:12.5px; font-family:var(--sans); outline:none; transition:border-color var(--transition);
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus { border-color:var(--accent); }
+.form-input::placeholder, .form-textarea::placeholder { color:var(--text-muted); }
+.form-textarea { resize:vertical; min-height:60px; line-height:1.6; }
+.form-select { appearance:none; -webkit-appearance:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23556478'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+}
+.form-select option { background:var(--bg-raised); color:var(--text-primary); }
+.form-hint { font-size:10.5px; color:var(--text-muted); margin-top:3px; }
+
+/* ── STEP INDICATOR ── */
+.step-bar { display:flex; gap:0; margin-bottom:20px; }
+.step-item { flex:1; display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--bg-raised); border:1px solid var(--border-subtle); cursor:pointer; transition:all var(--transition); position:relative; }
+.step-item:first-child { border-radius:var(--radius-sm) 0 0 var(--radius-sm); }
+.step-item:last-child { border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+.step-item:not(:last-child) { border-right:none; }
+.step-item.active { background:var(--accent-dim); border-color:var(--accent); z-index:1; }
+.step-item.active + .step-item { border-left-color:var(--accent); }
+.step-item.completed { background:var(--green-dim); border-color:rgba(47,206,126,0.3); }
+.step-item.completed + .step-item { border-left-color:rgba(47,206,126,0.3); }
+.step-num { width:22px; height:22px; border-radius:50%; background:var(--bg-active); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; font-weight:700; color:var(--text-muted); flex-shrink:0; }
+.step-item.active .step-num { background:var(--accent); color:#fff; }
+.step-item.completed .step-num { background:var(--green); color:var(--text-inverse); }
+.step-label { font-size:11px; font-weight:600; color:var(--text-muted); }
+.step-item.active .step-label { color:var(--accent); }
+.step-item.completed .step-label { color:var(--green); }
+
+/* ── FORCE RATING ── */
+.force-row { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--border-subtle); }
+.force-row:last-child { border-bottom:none; }
+.force-icon { font-size:18px; width:28px; text-align:center; flex-shrink:0; }
+.force-info { flex:1; min-width:0; }
+.force-name { font-size:12.5px; font-weight:600; }
+.force-desc { font-size:11px; color:var(--text-muted); margin-top:1px; }
+.force-slider-wrap { width:200px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.force-slider { -webkit-appearance:none; appearance:none; width:140px; height:4px; border-radius:2px; background:var(--bg-active); outline:none; cursor:pointer; }
+.force-slider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--accent); cursor:pointer; border:2px solid var(--bg-base); }
+.force-val { font-family:var(--mono); font-size:12px; font-weight:700; width:24px; text-align:right; color:var(--accent); }
+
+/* ── ERRC GRID ── */
+.errc-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.errc-cell { background:var(--bg-overlay); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:14px; }
+.errc-cell-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.errc-cell-letter { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:13px; font-weight:700; flex-shrink:0; }
+.errc-cell-title { font-size:12.5px; font-weight:700; }
+.errc-cell-desc { font-size:10.5px; color:var(--text-muted); margin-bottom:8px; }
+.errc-items { display:flex; flex-direction:column; gap:4px; }
+.errc-item-row { display:flex; gap:6px; }
+.errc-item-input { flex:1; background:var(--bg-base); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:6px 10px; color:var(--text-primary); font-size:12px; font-family:var(--sans); outline:none; }
+.errc-item-input:focus { border-color:var(--accent); }
+.errc-item-input::placeholder { color:var(--text-muted); }
+
+/* ── STRATEGY CANVAS ── */
+.canvas-factor-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-subtle); }
+.canvas-factor-row:last-child { border-bottom:none; }
+.canvas-factor-name { width:160px; flex-shrink:0; }
+.canvas-factor-name input { width:100%; background:var(--bg-base); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:5px 8px; color:var(--text-primary); font-size:12px; font-family:var(--sans); outline:none; }
+.canvas-factor-name input:focus { border-color:var(--accent); }
+.canvas-factor-sliders { flex:1; display:flex; align-items:center; gap:16px; }
+.canvas-slider-group { display:flex; align-items:center; gap:6px; }
+.canvas-slider-label { font-size:10px; font-weight:600; color:var(--text-muted); width:50px; }
+.canvas-slider { -webkit-appearance:none; appearance:none; width:100px; height:4px; border-radius:2px; outline:none; cursor:pointer; }
+.canvas-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; cursor:pointer; border:2px solid var(--bg-base); }
+.canvas-slider.actual { background:rgba(229,83,75,0.3); }
+.canvas-slider.actual::-webkit-slider-thumb { background:var(--red); }
+.canvas-slider.desired { background:rgba(47,206,126,0.3); }
+.canvas-slider.desired::-webkit-slider-thumb { background:var(--green); }
+.canvas-sval { font-family:var(--mono); font-size:11px; font-weight:600; width:18px; text-align:right; }
+
+/* ── SNAPSHOT ── */
+.snapshot-section { margin-bottom:16px; }
+.snapshot-section-title { font-size:11px; font-weight:700; color:var(--accent); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.snapshot-text { font-size:13px; color:var(--text-secondary); line-height:1.75; white-space:pre-wrap; }
+.snapshot-badge { display:inline-block; padding:3px 10px; border-radius:10px; font-size:10px; font-weight:600; margin:2px 4px 2px 0; }
+
+/* ── PROMPT FACTORY ── */
+.factory-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:20px; }
+.factory-card { background:var(--bg-raised); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:0; cursor:pointer; transition:all 0.2s ease; position:relative; overflow:hidden; }
+.factory-card:hover { border-color:var(--border-strong); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+.factory-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.factory-card-stripe { height:3px; }
+.factory-card-body { padding:18px 16px 16px; }
+.factory-card-icon { font-size:28px; margin-bottom:10px; display:block; }
+.factory-card-name { font-size:13px; font-weight:700; margin-bottom:4px; letter-spacing:-0.2px; }
+.factory-card-desc { font-size:11px; color:var(--text-muted); line-height:1.5; }
+.factory-card-badge { position:absolute; top:10px; right:10px; font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px; background:var(--accent-dim); color:var(--accent); letter-spacing:0.5px; text-transform:uppercase; }
+
+.factory-workspace { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.factory-input-panel { }
+.factory-output-panel { }
+
+.factory-field { margin-bottom:12px; }
+.factory-field label { display:block; font-size:10.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:4px; }
+.factory-field input, .factory-field textarea, .factory-field select {
+  width:100%; background:var(--bg-overlay); border:1px solid var(--border-default);
+  border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-primary);
+  font-size:12.5px; font-family:var(--sans); outline:none; transition:border-color var(--transition);
+}
+.factory-field input:focus, .factory-field textarea:focus { border-color:var(--accent); }
+.factory-field input::placeholder, .factory-field textarea::placeholder { color:var(--text-muted); }
+.factory-field textarea { resize:vertical; min-height:56px; line-height:1.6; }
+.factory-field select { appearance:none; -webkit-appearance:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23556478'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center; }
+.factory-field select option { background:var(--bg-raised); color:var(--text-primary); }
+.factory-field .field-hint { font-size:10px; color:var(--text-muted); margin-top:3px; }
+
+.prompt-output { background:var(--bg-base); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:20px; font-size:13px; color:var(--text-secondary); line-height:1.75; white-space:pre-wrap; font-family:var(--mono); max-height:500px; overflow-y:auto; position:relative; }
+.prompt-output-actions { display:flex; gap:8px; margin-top:12px; }
+.copy-toast { position:fixed; bottom:24px; right:24px; background:var(--green); color:var(--text-inverse); padding:10px 20px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; z-index:999; opacity:0; transform:translateY(10px); transition:all 0.3s ease; pointer-events:none; }
+.copy-toast.show { opacity:1; transform:translateY(0); }
+.strategy-locked-bar { display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--green-dim); border:1px solid rgba(47,206,126,0.2); border-radius:var(--radius-sm); margin-bottom:16px; }
+.strategy-locked-bar .lock-icon { font-size:14px; }
+.strategy-locked-bar .lock-text { font-size:11.5px; color:var(--green); font-weight:600; }
+.strategy-locked-bar .lock-sub { font-size:10.5px; color:var(--text-muted); margin-left:auto; }
+
+/* ── RADAR CHART ── */
+.radar-wrap { display:flex; align-items:center; justify-content:center; padding:10px; }
+.radar-legend { display:flex; gap:20px; justify-content:center; margin-top:8px; }
+.radar-legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); }
+.radar-legend-dot { width:10px; height:10px; border-radius:50%; }
+
+/* ── THESIS EDITOR ── */
+.thesis-area { width:100%; background:var(--bg-base); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:12px 14px; color:var(--text-primary); font-size:12.5px; font-family:var(--sans); outline:none; resize:vertical; min-height:80px; line-height:1.7; }
+.thesis-area:focus { border-color:var(--accent); }
+
+/* ── UTILITIES ── */
+.hidden { display:none !important; }
+.mb-20 { margin-bottom:20px; }
+.mt-12 { margin-top:12px; }
+.text-muted { color:var(--text-muted); }
+.text-accent { color:var(--accent); }
+.text-green { color:var(--green); }
+
+/* ── RESPONSIVE ── */
+@media (max-width:1200px) {
+  .factory-grid { grid-template-columns:repeat(3, 1fr); }
+}
+@media (max-width:1100px) {
+  .sidebar { width:200px; min-width:200px; }
+  .factory-grid { grid-template-columns:repeat(2, 1fr); }
+}
+@media (max-width:900px) {
+  .app { flex-direction:column; }
+  .sidebar { width:100%; min-width:0; flex-direction:row; border-right:none; border-bottom:1px solid var(--border-default); }
+  .sidebar-nav { flex-direction:row; overflow-x:auto; padding:4px 8px; }
+  .nav-group-label { display:none; }
+  .sidebar-brand { padding:10px 14px; }
+  .sidebar-footer { display:none; }
+  .kpi-row { grid-template-columns:repeat(2,1fr); }
+  .errc-grid { grid-template-columns:1fr; }
+  .grid-2, .grid-3 { grid-template-columns:1fr; }
+  .step-bar { flex-wrap:wrap; }
+  .factory-grid { grid-template-columns:repeat(2,1fr); }
+  .factory-workspace { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HTML STRUCTURE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>♟️ Porter Hub</h1>
+      <div class="sidebar-brand-sub">Strategy Command</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Analysis</div>
+      <div class="nav-item active" onclick="navigateTo('context')" data-nav="context">
+        <span class="nav-icon">📋</span> Business Context
+      </div>
+      <div class="nav-item" onclick="navigateTo('forces')" data-nav="forces">
+        <span class="nav-icon">🔍</span> Five Forces
+      </div>
+      <div class="nav-item" onclick="navigateTo('blueocean')" data-nav="blueocean">
+        <span class="nav-icon">🌊</span> Blue Ocean
+      </div>
+      <div class="nav-item" onclick="navigateTo('canvas')" data-nav="canvas">
+        <span class="nav-icon">📊</span> Strategy Canvas
+      </div>
+      <div class="nav-item" onclick="navigateTo('thesis')" data-nav="thesis">
+        <span class="nav-icon">🎯</span> Positioning Thesis
+      </div>
+      <div class="nav-group-label">Output</div>
+      <div class="nav-item" onclick="navigateTo('snapshot')" data-nav="snapshot">
+        <span class="nav-icon">📸</span> Strategic Snapshot
+      </div>
+      <div class="nav-item" onclick="navigateTo('factory')" data-nav="factory">
+        <span class="nav-icon">🏭</span> Prompt Factory
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="sales_commander_main.html">← Back to Main App</a>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbar-title">Business Context</div>
+        <div class="topbar-subtitle" id="topbar-subtitle">Define your strategic landscape</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="resetAll()">🗑 Reset All</button>
+        <button class="btn btn-sm" onclick="exportSnapshot()">📋 Export Snapshot</button>
+      </div>
+    </div>
+    <div class="content" id="content-area"></div>
+  </div>
+
+</div>
+
+<!-- Copy toast notification -->
+<div class="copy-toast" id="copy-toast">✓ Copied to clipboard</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   PORTER STRATEGY HUB — JavaScript
+   Structured prompt factory powered by Porter's Five Forces
+   and Blue Ocean Strategy (ERRC Grid + Strategy Canvas)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── STORAGE KEY ── */
+const STORAGE_KEY = 'porterHub_v1';
+
+/* ── DEFAULT STATE ── */
+function defaultState() {
+  return {
+    currentPage: 'context',
+
+    /* Step 1: Business Context */
+    context: {
+      companyName: '',
+      industry: '',
+      currentSituation: '',
+      channelMix: '',
+      goals: '',
+      differentiators: '',
+      targetCustomer: '',
+      revenueModel: '',
+    },
+
+    /* Step 2: Porter's Five Forces (1–10 ratings) */
+    forces: {
+      rivalry:       { rating: 5, notes: '' },
+      newEntrants:   { rating: 5, notes: '' },
+      substitutes:   { rating: 5, notes: '' },
+      buyerPower:    { rating: 5, notes: '' },
+      supplierPower: { rating: 5, notes: '' },
+    },
+
+    /* Step 3: Blue Ocean ERRC Grid */
+    errc: {
+      eliminate: ['', '', ''],
+      reduce:    ['', '', ''],
+      raise:     ['', '', ''],
+      create:    ['', '', ''],
+    },
+
+    /* Step 4: Strategy Canvas — up to 8 factors */
+    canvasFactors: [
+      { name: 'Price',           actual: 5, desired: 5 },
+      { name: 'Quality',         actual: 5, desired: 5 },
+      { name: 'Speed',           actual: 5, desired: 5 },
+      { name: 'Service',         actual: 5, desired: 5 },
+      { name: 'Innovation',      actual: 5, desired: 5 },
+      { name: 'Brand Trust',     actual: 5, desired: 5 },
+      { name: 'Ease of Use',     actual: 5, desired: 5 },
+      { name: 'Customization',   actual: 5, desired: 5 },
+    ],
+
+    /* Step 5: Positioning Thesis (auto-generated, user-editable) */
+    thesis: '',
+
+    /* Step completion tracking */
+    stepsCompleted: {
+      context: false,
+      forces: false,
+      blueocean: false,
+      canvas: false,
+      thesis: false,
+    },
+
+    /* Prompt Factory */
+    activePromptCat: null,
+  };
+}
+
+/* ── LOAD / SAVE ── */
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      /* Merge with defaults to handle new fields added in updates */
+      const def = defaultState();
+      return { ...def, ...saved, context: { ...def.context, ...saved.context }, forces: { ...def.forces, ...saved.forces }, errc: { ...def.errc, ...saved.errc }, stepsCompleted: { ...def.stepsCompleted, ...saved.stepsCompleted } };
+    }
+  } catch(e) { /* ignore parse errors */ }
+  return defaultState();
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function resetAll() {
+  if (!confirm('Reset all Porter Hub data? This cannot be undone.')) return;
+  state = defaultState();
+  saveState();
+  navigateTo('context');
+}
+
+/* ── NAVIGATION ── */
+function navigateTo(page) {
+  state.currentPage = page;
+  saveState();
+  renderPage();
+  /* Update sidebar active state */
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.nav === page);
+  });
+  /* Scroll content to top */
+  document.getElementById('content-area').scrollTop = 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE TITLES
+   ══════════════════════════════════════════════════════════════ */
+const PAGE_META = {
+  context:   { title: 'Business Context',    subtitle: 'Define your strategic landscape' },
+  forces:    { title: "Porter's Five Forces", subtitle: 'Assess competitive intensity' },
+  blueocean: { title: 'Blue Ocean — ERRC Grid', subtitle: 'Eliminate · Reduce · Raise · Create' },
+  canvas:    { title: 'Strategy Canvas',      subtitle: 'Desired position vs. actual position' },
+  thesis:    { title: 'Positioning Thesis',   subtitle: 'Your strategic narrative' },
+  snapshot:  { title: 'Strategic Snapshot',    subtitle: 'Complete analysis summary' },
+  factory:   { title: 'Prompt Factory',       subtitle: 'Generate context-injected prompts' },
+};
+
+/* ══════════════════════════════════════════════════════════════
+   STEP BAR COMPONENT
+   ══════════════════════════════════════════════════════════════ */
+function renderStepBar() {
+  const steps = [
+    { id:'context',   num:'1', label:'Context' },
+    { id:'forces',    num:'2', label:'Five Forces' },
+    { id:'blueocean', num:'3', label:'ERRC Grid' },
+    { id:'canvas',    num:'4', label:'Strategy Canvas' },
+    { id:'thesis',    num:'5', label:'Thesis' },
+  ];
+  return `<div class="step-bar">${steps.map(s => {
+    const isCurrent = state.currentPage === s.id;
+    const isDone = state.stepsCompleted[s.id];
+    const cls = isCurrent ? 'active' : (isDone ? 'completed' : '');
+    return `<div class="step-item ${cls}" onclick="navigateTo('${s.id}')">
+      <div class="step-num">${isDone && !isCurrent ? '✓' : s.num}</div>
+      <div class="step-label">${s.label}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER ROUTER
+   ══════════════════════════════════════════════════════════════ */
+function renderPage() {
+  const meta = PAGE_META[state.currentPage] || PAGE_META.context;
+  document.getElementById('topbar-title').textContent = meta.title;
+  document.getElementById('topbar-subtitle').textContent = meta.subtitle;
+  const el = document.getElementById('content-area');
+
+  switch (state.currentPage) {
+    case 'context':   el.innerHTML = renderContextPage(); break;
+    case 'forces':    el.innerHTML = renderForcesPage(); break;
+    case 'blueocean': el.innerHTML = renderBlueOceanPage(); break;
+    case 'canvas':    el.innerHTML = renderCanvasPage(); setTimeout(drawRadarChart, 50); break;
+    case 'thesis':    el.innerHTML = renderThesisPage(); break;
+    case 'snapshot':  el.innerHTML = renderSnapshotPage(); setTimeout(drawRadarChart, 50); break;
+    case 'factory':   el.innerHTML = renderFactoryPage(); break;
+    default:          el.innerHTML = renderContextPage();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE 1: BUSINESS CONTEXT
+   ══════════════════════════════════════════════════════════════ */
+function renderContextPage() {
+  const c = state.context;
+  return renderStepBar() + `
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Company & Market</span><span class="panel-meta">All fields saved automatically</span></div>
+      <div class="panel-body">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Company Name</label>
+            <input class="form-input" value="${esc(c.companyName)}" onchange="updateCtx('companyName',this.value)" placeholder="e.g. Risk Assurance Partners">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Industry / Vertical</label>
+            <input class="form-input" value="${esc(c.industry)}" onchange="updateCtx('industry',this.value)" placeholder="e.g. Furniture Protection Plans (B2B2C)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Current Situation</label>
+          <textarea class="form-textarea" onchange="updateCtx('currentSituation',this.value)" placeholder="What's happening right now? Market conditions, challenges, stage of growth...">${esc(c.currentSituation)}</textarea>
+          <div class="form-hint">Be specific — this context injects into every prompt the factory generates.</div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Channel Mix</label>
+            <textarea class="form-textarea" onchange="updateCtx('channelMix',this.value)" placeholder="e.g. Dealer network (primary), direct-to-designer (new), e-commerce (planned)...">${esc(c.channelMix)}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Revenue Model</label>
+            <textarea class="form-textarea" onchange="updateCtx('revenueModel',this.value)" placeholder="e.g. Per-plan commission from dealers, SaaS fee for commerce engine...">${esc(c.revenueModel)}</textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Strategic Goals (next 6–12 months)</label>
+          <textarea class="form-textarea" onchange="updateCtx('goals',this.value)" placeholder="e.g. Strengthen dealer retention, launch designer channel, increase attach rate from 22% to 35%...">${esc(c.goals)}</textarea>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Key Differentiators</label>
+            <textarea class="form-textarea" onchange="updateCtx('differentiators',this.value)" placeholder="What makes you defensible? Speed, data, relationships, tech, IP...">${esc(c.differentiators)}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Customer Profile</label>
+            <textarea class="form-textarea" onchange="updateCtx('targetCustomer',this.value)" placeholder="Who buys? Decision-maker title, company size, pain points...">${esc(c.targetCustomer)}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn btn-primary" onclick="completeStep('context');navigateTo('forces')">Save & Continue → Five Forces</button>
+    </div>`;
+}
+
+function updateCtx(field, value) {
+  state.context[field] = value;
+  saveState();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE 2: PORTER'S FIVE FORCES
+   ══════════════════════════════════════════════════════════════ */
+const FORCES_META = [
+  { key:'rivalry',       icon:'⚔️',  name:'Competitive Rivalry',         desc:'How intense is competition among existing players?' },
+  { key:'newEntrants',   icon:'🚪',  name:'Threat of New Entrants',      desc:'How easy is it for new competitors to enter your market?' },
+  { key:'substitutes',   icon:'🔄',  name:'Threat of Substitutes',       desc:'Can customers solve this problem a different way entirely?' },
+  { key:'buyerPower',    icon:'🛒',  name:'Bargaining Power of Buyers',  desc:'How much leverage do your customers have on pricing/terms?' },
+  { key:'supplierPower', icon:'🏭',  name:'Bargaining Power of Suppliers',desc:'How dependent are you on key suppliers or partners?' },
+];
+
+function renderForcesPage() {
+  return renderStepBar() + `
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Rate Each Force (1 = Low, 10 = High Threat)</span><span class="panel-meta">Slide to assess</span></div>
+      <div class="panel-body">
+        ${FORCES_META.map(f => {
+          const val = state.forces[f.key].rating;
+          const color = val <= 3 ? 'var(--green)' : val <= 6 ? 'var(--yellow)' : 'var(--red)';
+          return `<div class="force-row">
+            <div class="force-icon">${f.icon}</div>
+            <div class="force-info">
+              <div class="force-name">${f.name}</div>
+              <div class="force-desc">${f.desc}</div>
+            </div>
+            <div class="force-slider-wrap">
+              <input type="range" class="force-slider" min="1" max="10" value="${val}"
+                oninput="updateForce('${f.key}',+this.value)">
+              <span class="force-val" id="fval-${f.key}" style="color:${color}">${val}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Force Notes</span><span class="panel-meta">Optional context for each force</span></div>
+      <div class="panel-body">
+        ${FORCES_META.map(f => `
+          <div class="form-group">
+            <label class="form-label">${f.icon} ${f.name} — Notes</label>
+            <input class="form-input" value="${esc(state.forces[f.key].notes)}" onchange="updateForceNote('${f.key}',this.value)" placeholder="Key dynamics, specific competitors, data points...">
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;">
+      <button class="btn" onclick="navigateTo('context')">← Context</button>
+      <button class="btn btn-primary" onclick="completeStep('forces');navigateTo('blueocean')">Save & Continue → ERRC Grid</button>
+    </div>`;
+}
+
+function updateForce(key, val) {
+  state.forces[key].rating = val;
+  const el = document.getElementById('fval-' + key);
+  if (el) {
+    el.textContent = val;
+    el.style.color = val <= 3 ? 'var(--green)' : val <= 6 ? 'var(--yellow)' : 'var(--red)';
+  }
+  saveState();
+}
+
+function updateForceNote(key, val) {
+  state.forces[key].notes = val;
+  saveState();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE 3: BLUE OCEAN — ERRC GRID
+   ══════════════════════════════════════════════════════════════ */
+const ERRC_META = [
+  { key:'eliminate', letter:'E', title:'Eliminate', desc:'Which factors the industry takes for granted should be eliminated?', color:'var(--red)', colorDim:'var(--red-dim)' },
+  { key:'reduce',    letter:'R', title:'Reduce',    desc:'Which factors should be reduced well below the industry standard?', color:'var(--orange)', colorDim:'var(--orange-dim)' },
+  { key:'raise',     letter:'R', title:'Raise',     desc:'Which factors should be raised well above the industry standard?', color:'var(--green)', colorDim:'var(--green-dim)' },
+  { key:'create',    letter:'C', title:'Create',    desc:'Which factors should be created that the industry has never offered?', color:'var(--accent)', colorDim:'var(--accent-dim)' },
+];
+
+function renderBlueOceanPage() {
+  return renderStepBar() + `
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">ERRC Grid — Blue Ocean Strategy</span><span class="panel-meta">Define your value innovation moves</span></div>
+      <div class="panel-body">
+        <div class="errc-grid">
+          ${ERRC_META.map(cell => `
+            <div class="errc-cell">
+              <div class="errc-cell-header">
+                <div class="errc-cell-letter" style="background:${cell.colorDim};color:${cell.color}">${cell.letter}</div>
+                <div class="errc-cell-title" style="color:${cell.color}">${cell.title}</div>
+              </div>
+              <div class="errc-cell-desc">${cell.desc}</div>
+              <div class="errc-items">
+                ${state.errc[cell.key].map((item, i) => `
+                  <div class="errc-item-row">
+                    <input class="errc-item-input" value="${esc(item)}" placeholder="${cell.title} item ${i+1}..."
+                      onchange="updateErrc('${cell.key}',${i},this.value)">
+                  </div>
+                `).join('')}
+                <button class="btn btn-ghost btn-sm mt-12" onclick="addErrcItem('${cell.key}')">+ Add item</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;">
+      <button class="btn" onclick="navigateTo('forces')">← Five Forces</button>
+      <button class="btn btn-primary" onclick="completeStep('blueocean');navigateTo('canvas')">Save & Continue → Strategy Canvas</button>
+    </div>`;
+}
+
+function updateErrc(key, idx, val) {
+  state.errc[key][idx] = val;
+  saveState();
+}
+
+function addErrcItem(key) {
+  state.errc[key].push('');
+  saveState();
+  renderPage();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE 4: STRATEGY CANVAS + RADAR CHART
+   ══════════════════════════════════════════════════════════════ */
+function renderCanvasPage() {
+  return renderStepBar() + `
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Strategy Canvas Factors</span><span class="panel-meta">Rate actual vs. desired (1–10)</span></div>
+        <div class="panel-body">
+          ${state.canvasFactors.map((f, i) => `
+            <div class="canvas-factor-row">
+              <div class="canvas-factor-name">
+                <input value="${esc(f.name)}" onchange="updateCanvasFactor(${i},'name',this.value)" placeholder="Factor name...">
+              </div>
+              <div class="canvas-factor-sliders">
+                <div class="canvas-slider-group">
+                  <span class="canvas-slider-label" style="color:var(--red)">Actual</span>
+                  <input type="range" class="canvas-slider actual" min="1" max="10" value="${f.actual}"
+                    oninput="updateCanvasFactor(${i},'actual',+this.value);drawRadarChart()">
+                  <span class="canvas-sval" style="color:var(--red)" id="cval-a-${i}">${f.actual}</span>
+                </div>
+                <div class="canvas-slider-group">
+                  <span class="canvas-slider-label" style="color:var(--green)">Desired</span>
+                  <input type="range" class="canvas-slider desired" min="1" max="10" value="${f.desired}"
+                    oninput="updateCanvasFactor(${i},'desired',+this.value);drawRadarChart()">
+                  <span class="canvas-sval" style="color:var(--green)" id="cval-d-${i}">${f.desired}</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Brand Position Radar</span><span class="panel-meta">Desired vs. Actual</span></div>
+        <div class="panel-body">
+          <div class="radar-wrap">
+            <canvas id="radar-canvas" width="360" height="360"></canvas>
+          </div>
+          <div class="radar-legend">
+            <div class="radar-legend-item"><div class="radar-legend-dot" style="background:var(--red)"></div> Actual Position</div>
+            <div class="radar-legend-item"><div class="radar-legend-dot" style="background:var(--green)"></div> Desired Position</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;">
+      <button class="btn" onclick="navigateTo('blueocean')">← ERRC Grid</button>
+      <button class="btn btn-primary" onclick="completeStep('canvas');navigateTo('thesis')">Save & Continue → Thesis</button>
+    </div>`;
+}
+
+function updateCanvasFactor(idx, field, val) {
+  state.canvasFactors[idx][field] = val;
+  /* Update displayed value */
+  if (field === 'actual') {
+    const el = document.getElementById('cval-a-' + idx);
+    if (el) el.textContent = val;
+  } else if (field === 'desired') {
+    const el = document.getElementById('cval-d-' + idx);
+    if (el) el.textContent = val;
+  }
+  saveState();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RADAR CHART (Canvas)
+   ══════════════════════════════════════════════════════════════ */
+function drawRadarChart() {
+  const canvas = document.getElementById('radar-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const maxR = Math.min(cx, cy) - 40;
+
+  /* Clear */
+  ctx.clearRect(0, 0, W, H);
+
+  const factors = state.canvasFactors.filter(f => f.name.trim());
+  const n = factors.length;
+  if (n < 3) {
+    ctx.fillStyle = '#556478';
+    ctx.font = '12px IBM Plex Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText('Need at least 3 named factors', cx, cy);
+    return;
+  }
+
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2; /* 12 o'clock */
+
+  /* Helper: get point on radar */
+  function getPoint(i, val) {
+    const angle = startAngle + i * angleStep;
+    const r = (val / 10) * maxR;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  }
+
+  /* Draw concentric rings */
+  for (let ring = 2; ring <= 10; ring += 2) {
+    ctx.beginPath();
+    const r = (ring / 10) * maxR;
+    for (let i = 0; i <= n; i++) {
+      const angle = startAngle + i * angleStep;
+      const px = cx + r * Math.cos(angle);
+      const py = cy + r * Math.sin(angle);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  /* Draw spokes + labels */
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const outerX = cx + maxR * Math.cos(angle);
+    const outerY = cy + maxR * Math.sin(angle);
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(outerX, outerY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    /* Labels */
+    const labelR = maxR + 18;
+    const lx = cx + labelR * Math.cos(angle);
+    const ly = cy + labelR * Math.sin(angle);
+    ctx.fillStyle = '#dde3ec';
+    ctx.font = '500 10px IBM Plex Sans';
+    ctx.textAlign = Math.abs(Math.cos(angle)) < 0.1 ? 'center' : (Math.cos(angle) > 0 ? 'left' : 'right');
+    ctx.textBaseline = Math.abs(Math.sin(angle)) < 0.1 ? 'middle' : (Math.sin(angle) > 0 ? 'top' : 'bottom');
+    ctx.fillText(factors[i].name, lx, ly);
+  }
+
+  /* Draw polygon: Actual (red) */
+  drawPolygon(ctx, factors.map((f, i) => getPoint(i, f.actual)), 'rgba(229,83,75,0.15)', 'rgba(229,83,75,0.7)', 2);
+
+  /* Draw polygon: Desired (green) */
+  drawPolygon(ctx, factors.map((f, i) => getPoint(i, f.desired)), 'rgba(47,206,126,0.1)', 'rgba(47,206,126,0.7)', 2);
+
+  /* Draw dots */
+  factors.forEach((f, i) => {
+    drawDot(ctx, getPoint(i, f.actual), 'rgba(229,83,75,1)', 4);
+    drawDot(ctx, getPoint(i, f.desired), 'rgba(47,206,126,1)', 4);
+  });
+}
+
+function drawPolygon(ctx, points, fill, stroke, lw) {
+  if (points.length < 3) return;
+  ctx.beginPath();
+  points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+}
+
+function drawDot(ctx, p, color, r) {
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE 5: POSITIONING THESIS
+   ══════════════════════════════════════════════════════════════ */
+function renderThesisPage() {
+  /* Auto-generate thesis if empty */
+  if (!state.thesis && hasMinimalContext()) {
+    state.thesis = generateThesis();
+    saveState();
+  }
+  return renderStepBar() + `
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Your Positioning Thesis</span>
+        <button class="btn btn-ghost btn-sm" onclick="regenerateThesis()">🔄 Regenerate</button>
+      </div>
+      <div class="panel-body">
+        <div class="form-hint mb-20">This thesis is auto-generated from your Five Forces, ERRC, and Strategy Canvas inputs. Edit freely — it injects into every factory prompt.</div>
+        <textarea class="thesis-area" id="thesis-input" rows="8" onchange="state.thesis=this.value;saveState()">${esc(state.thesis)}</textarea>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Thesis Validation Checklist</span></div>
+      <div class="panel-body">
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:2;">
+          ${thesisChecklist().map(item => `<div>${item.ok ? '✅' : '⬜'} ${item.label}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;">
+      <button class="btn" onclick="navigateTo('canvas')">← Strategy Canvas</button>
+      <button class="btn btn-success" onclick="completeStep('thesis');navigateTo('snapshot')">✓ Complete Analysis → View Snapshot</button>
+    </div>`;
+}
+
+function thesisChecklist() {
+  const c = state.context;
+  return [
+    { ok: !!c.companyName, label: 'Company name defined' },
+    { ok: !!c.industry, label: 'Industry specified' },
+    { ok: !!c.differentiators, label: 'Key differentiators identified' },
+    { ok: !!c.targetCustomer, label: 'Target customer profiled' },
+    { ok: state.stepsCompleted.forces, label: 'Five Forces assessed' },
+    { ok: state.errc.create.some(x => x.trim()), label: 'At least one ERRC "Create" item defined' },
+    { ok: state.thesis.length > 50, label: 'Thesis is substantive (50+ characters)' },
+  ];
+}
+
+function generateThesis() {
+  const c = state.context;
+  const forces = state.forces;
+  const errc = state.errc;
+
+  const companyName = c.companyName || '[Company]';
+  const industry = c.industry || '[Industry]';
+  const diffList = c.differentiators || 'our core capabilities';
+  const targetCust = c.targetCustomer || 'our target buyers';
+
+  /* Determine highest threats */
+  const forceEntries = Object.entries(forces).map(([k, v]) => ({ key: k, ...v }));
+  forceEntries.sort((a, b) => b.rating - a.rating);
+  const topThreat = FORCES_META.find(f => f.key === forceEntries[0].key);
+
+  /* Get ERRC creates */
+  const creates = errc.create.filter(x => x.trim());
+  const raises = errc.raise.filter(x => x.trim());
+  const eliminates = errc.eliminate.filter(x => x.trim());
+
+  /* Build canvas gaps */
+  const bigGaps = state.canvasFactors
+    .filter(f => f.name.trim() && (f.desired - f.actual) >= 3)
+    .map(f => f.name);
+
+  let thesis = `${companyName} competes in ${industry} where ${topThreat ? topThreat.name.toLowerCase() : 'competitive pressure'} is the dominant structural force (rated ${forceEntries[0].rating}/10).`;
+
+  thesis += `\n\nOur strategic position is built on: ${diffList}.`;
+
+  if (creates.length > 0) {
+    thesis += `\n\nBlue Ocean moves: We CREATE value through ${creates.join(', ')}`;
+    if (raises.length > 0) thesis += `, and RAISE the bar on ${raises.join(', ')}`;
+    if (eliminates.length > 0) thesis += `. We ELIMINATE ${eliminates.join(', ')} — refusing to compete on factors that commoditize the industry`;
+    thesis += '.';
+  }
+
+  if (bigGaps.length > 0) {
+    thesis += `\n\nPriority investment areas (largest gap between actual and desired position): ${bigGaps.join(', ')}.`;
+  }
+
+  thesis += `\n\nTarget buyer: ${targetCust}.`;
+
+  if (c.goals) {
+    thesis += `\n\nStrategic intent: ${c.goals}`;
+  }
+
+  return thesis;
+}
+
+function regenerateThesis() {
+  state.thesis = generateThesis();
+  saveState();
+  renderPage();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE 6: STRATEGIC SNAPSHOT
+   ══════════════════════════════════════════════════════════════ */
+function renderSnapshotPage() {
+  const c = state.context;
+  const allDone = Object.values(state.stepsCompleted).every(v => v);
+
+  /* KPI bar */
+  const forcesAvg = (Object.values(state.forces).reduce((s, f) => s + f.rating, 0) / 5).toFixed(1);
+  const errcCount = Object.values(state.errc).flat().filter(x => x.trim()).length;
+  const gapCount = state.canvasFactors.filter(f => f.name.trim() && (f.desired - f.actual) >= 2).length;
+  const completionPct = Math.round((Object.values(state.stepsCompleted).filter(v => v).length / 5) * 100);
+
+  return `
+    <div class="kpi-row cols-4">
+      <div class="kpi"><div class="kpi-stripe" style="background:${allDone ? 'var(--green)' : 'var(--yellow)'}"></div><div class="kpi-label">Completion</div><div class="kpi-value" style="color:${allDone ? 'var(--green)' : 'var(--yellow)'}">${completionPct}%</div><div class="kpi-sub">${allDone ? 'Analysis complete' : 'Steps remaining'}</div></div>
+      <div class="kpi"><div class="kpi-stripe" style="background:var(--red)"></div><div class="kpi-label">Avg Force Threat</div><div class="kpi-value" style="color:${forcesAvg > 6 ? 'var(--red)' : forcesAvg > 3 ? 'var(--yellow)' : 'var(--green)'}">${forcesAvg}</div><div class="kpi-sub">of 10.0 maximum</div></div>
+      <div class="kpi"><div class="kpi-stripe" style="background:var(--accent)"></div><div class="kpi-label">ERRC Moves</div><div class="kpi-value" style="color:var(--accent)">${errcCount}</div><div class="kpi-sub">strategic actions defined</div></div>
+      <div class="kpi"><div class="kpi-stripe" style="background:var(--purple)"></div><div class="kpi-label">Position Gaps</div><div class="kpi-value" style="color:var(--purple)">${gapCount}</div><div class="kpi-sub">factors ≥2 gap (actual vs desired)</div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Five Forces Summary -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🔍 Five Forces Summary</span></div>
+        <div class="panel-body">
+          ${FORCES_META.map(f => {
+            const val = state.forces[f.key].rating;
+            const notes = state.forces[f.key].notes;
+            const color = val <= 3 ? 'var(--green)' : val <= 6 ? 'var(--yellow)' : 'var(--red)';
+            const barW = val * 10;
+            return `<div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                <span style="font-size:12px;font-weight:600;">${f.icon} ${f.name}</span>
+                <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${color}">${val}/10</span>
+              </div>
+              <div style="height:4px;background:var(--bg-active);border-radius:2px;overflow:hidden;">
+                <div style="height:100%;width:${barW}%;background:${color};border-radius:2px;transition:width 0.3s"></div>
+              </div>
+              ${notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${esc(notes)}</div>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- ERRC Grid Summary -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🌊 ERRC Grid</span></div>
+        <div class="panel-body">
+          ${ERRC_META.map(cell => {
+            const items = state.errc[cell.key].filter(x => x.trim());
+            return `<div style="margin-bottom:12px;">
+              <div style="font-size:11px;font-weight:700;color:${cell.color};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">${cell.title}</div>
+              ${items.length ? items.map(item => `<span class="snapshot-badge" style="background:${cell.colorDim};color:${cell.color}">${esc(item)}</span>`).join('') : '<span style="font-size:11px;color:var(--text-muted);">—</span>'}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Radar Chart -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">📊 Brand Position Radar</span><span class="panel-meta">Actual (red) vs Desired (green)</span></div>
+      <div class="panel-body">
+        <div class="radar-wrap"><canvas id="radar-canvas" width="400" height="400"></canvas></div>
+        <div class="radar-legend">
+          <div class="radar-legend-item"><div class="radar-legend-dot" style="background:var(--red)"></div> Actual Position</div>
+          <div class="radar-legend-item"><div class="radar-legend-dot" style="background:var(--green)"></div> Desired Position</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Positioning Thesis -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🎯 Positioning Thesis</span></div>
+      <div class="panel-body">
+        <div class="snapshot-text">${esc(state.thesis) || '<span class="text-muted">No thesis defined. Complete the analysis flow first.</span>'}</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:8px;">
+      <button class="btn btn-primary" onclick="navigateTo('factory')">🏭 Open Prompt Factory</button>
+      <button class="btn" onclick="exportSnapshot()">📋 Copy Full Snapshot</button>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE 7: PROMPT FACTORY
+   Visual card grid — user picks a category, fills 1-2 targeted
+   fields, gets a ready-to-paste prompt. Strategic context is
+   injected INVISIBLY. User never sees the system-level backbone.
+   ══════════════════════════════════════════════════════════════ */
+
+const PROMPT_CATEGORIES = [
+  {
+    id:'social-media', icon:'📱', name:'Social Media', color:'var(--accent)', colorDim:'var(--accent-dim)',
+    desc:'Ad copy, posts, and campaign concepts tuned to your positioning.',
+    fields:[
+      { key:'platform', type:'select', label:'Platform', options:['LinkedIn','Facebook','Instagram','TikTok','X / Twitter','All platforms'], hint:'Primary platform for this batch' },
+      { key:'audience', type:'text', label:'Target Audience', placeholder:'e.g. Furniture store owners, Interior designers, Retail VPs...', hint:'Who should see this?' },
+      { key:'goal', type:'select', label:'Campaign Goal', options:['Brand awareness','Lead generation','Event promotion','Product launch','Retargeting','Recruitment'], hint:'Primary objective' },
+      { key:'tone', type:'select', label:'Tone', options:['Professional','Conversational','Urgent','Educational','Aspirational'], hint:'Voice and feel' },
+    ]
+  },
+  {
+    id:'email', icon:'✉️', name:'Email Outreach', color:'var(--green)', colorDim:'var(--green-dim)',
+    desc:'Cold outreach, nurture sequences, and re-engagement emails.',
+    fields:[
+      { key:'recipient', type:'text', label:'Recipient Role', placeholder:'e.g. Dealer principal, Store manager, Interior designer...', hint:'Who receives this?' },
+      { key:'seqType', type:'select', label:'Sequence Type', options:['Cold outreach (5 emails)','Warm follow-up (3 emails)','Re-engagement (3 emails)','Event invitation (2 emails)','Onboarding welcome (4 emails)'], hint:'Type of sequence' },
+      { key:'offer', type:'text', label:'What are you offering?', placeholder:'e.g. Free attach-rate audit, Commerce engine demo, Partnership discussion...', hint:'The hook or CTA' },
+    ]
+  },
+  {
+    id:'pricing', icon:'💰', name:'Pricing Strategy', color:'var(--yellow)', colorDim:'var(--yellow-dim)',
+    desc:'Pricing models, competitive price positioning, and value framing.',
+    fields:[
+      { key:'product', type:'text', label:'Product / Service', placeholder:'e.g. 5-year furniture protection plan, Commerce engine license...', hint:'What are you pricing?' },
+      { key:'priceContext', type:'text', label:'Current Pricing', placeholder:'e.g. $149 per plan, 8% dealer margin, $299/mo SaaS fee...', hint:'Where pricing stands today' },
+      { key:'competitor', type:'text', label:'Key Competitor Pricing', placeholder:'e.g. Montage charges $129, Guardsman at $179...', hint:'Benchmark if known' },
+      { key:'objective', type:'select', label:'Pricing Objective', options:['Maximize margin','Gain market share','Premium positioning','Volume penetration','Tiered packaging'], hint:'What outcome matters most?' },
+    ]
+  },
+  {
+    id:'marketing-plan', icon:'📋', name:'Marketing Plan', color:'var(--purple)', colorDim:'var(--purple-dim)',
+    desc:'90-day marketing plans, channel strategy, and campaign calendars.',
+    fields:[
+      { key:'timeframe', type:'select', label:'Timeframe', options:['30-day sprint','90-day plan','6-month roadmap','Annual plan'], hint:'Planning horizon' },
+      { key:'budget', type:'text', label:'Budget Range', placeholder:'e.g. $5K/mo, $50K total, Bootstrap (time only)...', hint:'Rough budget constraint' },
+      { key:'focus', type:'text', label:'Primary Focus', placeholder:'e.g. Dealer recruitment, Designer channel launch, Brand refresh...', hint:'What are you trying to achieve?' },
+      { key:'channels', type:'text', label:'Channels to Include', placeholder:'e.g. LinkedIn, email, trade shows, direct mail, webinars...', hint:'Marketing channels' },
+    ]
+  },
+  {
+    id:'pipeline', icon:'🔄', name:'Pipeline Plan', color:'var(--cyan)', colorDim:'var(--cyan-dim)',
+    desc:'Sales pipeline strategy, territory plans, and prospecting frameworks.',
+    fields:[
+      { key:'target', type:'text', label:'Revenue Target', placeholder:'e.g. $2M new dealer revenue, 50 new designers, 10 enterprise accounts...', hint:'What you need to hit' },
+      { key:'timeframe', type:'select', label:'Timeframe', options:['This quarter','Next quarter','This half','This year'], hint:'When by?' },
+      { key:'teamSize', type:'text', label:'Sales Team Size', placeholder:'e.g. 2 reps, 1 manager, Solo founder...', hint:'Resources available' },
+      { key:'currentState', type:'text', label:'Current Pipeline State', placeholder:'e.g. $800K pipeline, 20 active deals, mostly early stage...', hint:'Where things stand' },
+    ]
+  },
+  {
+    id:'competitive', icon:'⚔️', name:'Competitive Analysis', color:'var(--red)', colorDim:'var(--red-dim)',
+    desc:'Battle cards, competitive positioning, and win/loss analysis frameworks.',
+    fields:[
+      { key:'competitor', type:'text', label:'Primary Competitor', placeholder:'e.g. Montage Furniture Services, Guardsman, SquareTrade...', hint:'Who are you analyzing?' },
+      { key:'context', type:'select', label:'Analysis Type', options:['Full battle card','Win/loss framework','Positioning comparison','Objection responses','Switch campaign'], hint:'What kind of output?' },
+      { key:'weaknesses', type:'text', label:'Known Competitor Weaknesses', placeholder:'e.g. Slow claims, poor dealer support, no designer channel...', hint:'Intel you already have' },
+    ]
+  },
+  {
+    id:'offer', icon:'🎁', name:'Build an Offer', color:'var(--orange)', colorDim:'var(--orange-dim)',
+    desc:'Structured offers, proposals, partnership packages, and deal structures.',
+    fields:[
+      { key:'offerType', type:'select', label:'Offer Type', options:['Dealer partnership package','Designer onboarding offer','Enterprise proposal','Promotional bundle','Pilot program','Trial / free tier'], hint:'What kind of offer?' },
+      { key:'recipient', type:'text', label:'Who Is This For?', placeholder:'e.g. Regional furniture chain with 12 stores, Independent designer, National retailer...', hint:'Target recipient profile' },
+      { key:'hook', type:'text', label:'Key Value Hook', placeholder:'e.g. Guaranteed 30% attach rate lift, Free first 90 days, Revenue share model...', hint:'The irresistible element' },
+      { key:'constraints', type:'text', label:'Constraints / Limits', placeholder:'e.g. Must maintain 40% margin, Can\'t offer exclusivity, Max 90-day pilot...', hint:'Guardrails' },
+    ]
+  },
+  {
+    id:'custom', icon:'⚙️', name:'Custom', color:'var(--text-muted)', colorDim:'var(--bg-active)',
+    desc:'Any other prompt — positioning decks, scripts, experiment plans, proposals.',
+    fields:[
+      { key:'request', type:'textarea', label:'What Do You Need?', placeholder:'Describe the output you want. Be specific about format, audience, and purpose.\n\ne.g. "Write a 12-slide positioning deck narrative for our dealer conference" or "Create a Sandler-style discovery script for designer outreach calls"...', hint:'Your strategy is automatically injected — just describe the deliverable.' },
+    ]
+  },
+];
+
+/* ── Factory form state (separate from analysis state, not persisted long-term) ── */
+if (!state.factoryInputs) state.factoryInputs = {};
+
+function renderFactoryPage() {
+  const activeCat = state.activePromptCat;
+  const catObj = PROMPT_CATEGORIES.find(c => c.id === activeCat);
+
+  /* Strategy locked indicator */
+  let html = `
+    <div class="strategy-locked-bar">
+      <span class="lock-icon">🔒</span>
+      <span class="lock-text">Strategy Locked: ${esc(state.context.companyName || 'Your Company')}</span>
+      <span class="lock-sub">All prompts auto-inject your Five Forces, ERRC, Canvas & Thesis</span>
+    </div>`;
+
+  /* Card grid */
+  html += `<div class="factory-grid">${PROMPT_CATEGORIES.map(cat => {
+    const isActive = activeCat === cat.id;
+    return `<div class="factory-card${isActive ? ' active' : ''}" onclick="selectPromptCat('${cat.id}')">
+      <div class="factory-card-stripe" style="background:${cat.color}"></div>
+      <div class="factory-card-body">
+        <span class="factory-card-icon">${cat.icon}</span>
+        <div class="factory-card-name">${cat.name}</div>
+        <div class="factory-card-desc">${cat.desc}</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+
+  /* If a category is selected, show input form + output */
+  if (catObj) {
+    const inputs = state.factoryInputs[activeCat] || {};
+
+    html += `<div class="factory-workspace">`;
+
+    /* LEFT: Input panel */
+    html += `<div class="factory-input-panel">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">${catObj.icon} ${catObj.name} — Configure</span>
+          <span class="panel-meta">Fill in, then generate</span>
+        </div>
+        <div class="panel-body">
+          ${catObj.fields.map(f => {
+            const val = inputs[f.key] || '';
+            if (f.type === 'select') {
+              return `<div class="factory-field">
+                <label>${f.label}</label>
+                <select onchange="updateFactoryInput('${activeCat}','${f.key}',this.value)">
+                  <option value="">— Select —</option>
+                  ${f.options.map(opt => `<option value="${esc(opt)}"${val === opt ? ' selected' : ''}>${opt}</option>`).join('')}
+                </select>
+                ${f.hint ? `<div class="field-hint">${f.hint}</div>` : ''}
+              </div>`;
+            } else if (f.type === 'textarea') {
+              return `<div class="factory-field">
+                <label>${f.label}</label>
+                <textarea rows="5" onchange="updateFactoryInput('${activeCat}','${f.key}',this.value)" placeholder="${esc(f.placeholder || '')}">${esc(val)}</textarea>
+                ${f.hint ? `<div class="field-hint">${f.hint}</div>` : ''}
+              </div>`;
+            } else {
+              return `<div class="factory-field">
+                <label>${f.label}</label>
+                <input type="text" value="${esc(val)}" onchange="updateFactoryInput('${activeCat}','${f.key}',this.value)" placeholder="${esc(f.placeholder || '')}">
+                ${f.hint ? `<div class="field-hint">${f.hint}</div>` : ''}
+              </div>`;
+            }
+          }).join('')}
+          <button class="btn btn-primary" onclick="generateAndShowPrompt()" style="margin-top:8px;">🏭 Generate Prompt</button>
+        </div>
+      </div>
+    </div>`;
+
+    /* RIGHT: Output panel */
+    const promptText = state._lastGeneratedPrompt || null;
+    html += `<div class="factory-output-panel">
+      <div class="panel" style="height:100%;">
+        <div class="panel-header">
+          <span class="panel-title">Generated Prompt</span>
+          <span class="panel-meta">Ready to paste into any AI</span>
+        </div>
+        <div class="panel-body">
+          ${promptText ? `
+            <div class="prompt-output" id="prompt-output">${esc(promptText)}</div>
+            <div class="prompt-output-actions">
+              <button class="btn btn-primary" onclick="copyPrompt()">📋 Copy to Clipboard</button>
+              <button class="btn" onclick="downloadPrompt()">💾 Download .txt</button>
+            </div>
+          ` : `
+            <div style="text-align:center;padding:40px 16px;color:var(--text-muted);">
+              <div style="font-size:24px;margin-bottom:8px;">📄</div>
+              <div style="font-size:12.5px;">Fill in the fields and click Generate.<br>Your strategy is injected automatically.</div>
+            </div>
+          `}
+        </div>
+      </div>
+    </div>`;
+
+    html += `</div>`; /* end factory-workspace */
+  }
+
+  return html;
+}
+
+function selectPromptCat(catId) {
+  state.activePromptCat = (state.activePromptCat === catId) ? null : catId;
+  state._lastGeneratedPrompt = null;
+  saveState();
+  renderPage();
+}
+
+function updateFactoryInput(catId, key, val) {
+  if (!state.factoryInputs[catId]) state.factoryInputs[catId] = {};
+  state.factoryInputs[catId][key] = val;
+  saveState();
+}
+
+function generateAndShowPrompt() {
+  const catId = state.activePromptCat;
+  if (!catId) return;
+  state._lastGeneratedPrompt = generatePrompt(catId);
+  saveState();
+  renderPage();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROMPT GENERATION ENGINE
+   The strategic context is injected as a HIDDEN SYSTEM BLOCK.
+   The user only sees the output prompt — not the strategy DNA.
+   The prompt instructs the receiving AI to use the strategy
+   without revealing it was machine-injected.
+   ══════════════════════════════════════════════════════════════ */
+
+function buildStrategicContext() {
+  /* This is the INVISIBLE backbone injected into every prompt.
+     The user never sees this in the UI — it's only in the
+     copied/downloaded prompt text. */
+  const c = state.context;
+  const f = state.forces;
+
+  let ctx = `[SYSTEM CONTEXT — DO NOT REPEAT THIS SECTION IN YOUR OUTPUT. Use it to inform every element of your response. All claims, messaging, and strategy must align with this context.]\n\n`;
+  ctx += `COMPANY: ${c.companyName || '[Company]'}\n`;
+  ctx += `INDUSTRY: ${c.industry || '[Industry]'}\n`;
+  ctx += `SITUATION: ${c.currentSituation || 'Not specified'}\n`;
+  ctx += `CHANNELS: ${c.channelMix || 'Not specified'}\n`;
+  ctx += `REVENUE MODEL: ${c.revenueModel || 'Not specified'}\n`;
+  ctx += `TARGET CUSTOMER: ${c.targetCustomer || 'Not specified'}\n`;
+  ctx += `DIFFERENTIATORS: ${c.differentiators || 'Not specified'}\n`;
+  ctx += `STRATEGIC GOALS: ${c.goals || 'Not specified'}\n\n`;
+
+  /* Five Forces — compressed */
+  ctx += `COMPETITIVE LANDSCAPE (Porter's Five Forces):\n`;
+  FORCES_META.forEach(fm => {
+    const force = f[fm.key];
+    const level = force.rating <= 3 ? 'LOW' : force.rating <= 6 ? 'MODERATE' : 'HIGH';
+    ctx += `• ${fm.name}: ${level} (${force.rating}/10)${force.notes ? ' — ' + force.notes : ''}\n`;
+  });
+  ctx += `\n`;
+
+  /* ERRC Grid — compressed */
+  ctx += `STRATEGIC MOVES (Blue Ocean ERRC):\n`;
+  ERRC_META.forEach(cell => {
+    const items = state.errc[cell.key].filter(x => x.trim());
+    if (items.length) ctx += `• ${cell.title.toUpperCase()}: ${items.join('; ')}\n`;
+  });
+  ctx += `\n`;
+
+  /* Strategy Canvas gaps */
+  const gaps = state.canvasFactors
+    .filter(fac => fac.name.trim() && (fac.desired - fac.actual) >= 2)
+    .map(fac => `${fac.name} (${fac.actual}→${fac.desired})`);
+  if (gaps.length) {
+    ctx += `PRIORITY INVESTMENT AREAS (largest positioning gaps): ${gaps.join(', ')}\n\n`;
+  }
+
+  /* Thesis */
+  if (state.thesis) {
+    ctx += `POSITIONING THESIS:\n${state.thesis}\n\n`;
+  }
+
+  ctx += `[END SYSTEM CONTEXT]\n\n`;
+  return ctx;
+}
+
+function generatePrompt(catId) {
+  const stratCtx = buildStrategicContext();
+  const co = state.context.companyName || '[Company]';
+  const inputs = state.factoryInputs[catId] || {};
+
+  /* Helper to get input or default */
+  const g = (key, fallback) => inputs[key] || fallback || '';
+
+  const generators = {
+
+    /* ── SOCIAL MEDIA ── */
+    'social-media': () => {
+      const platform = g('platform', 'all major platforms');
+      const audience = g('audience', 'our target customer profile');
+      const goal = g('goal', 'brand awareness');
+      const tone = g('tone', 'Professional');
+      return `${stratCtx}Create a social media campaign for ${co}.
+
+PLATFORM: ${platform}
+AUDIENCE: ${audience}
+GOAL: ${goal}
+TONE: ${tone}
+
+Produce exactly 5 ad/post concepts. For each:
+1. Headline (8 words max)
+2. Body copy (40 words max)
+3. CTA button text
+4. Visual direction (1-2 sentences describing the image/video)
+5. Hashtag set (5 tags)
+
+Then provide:
+• A/B test plan for the top 2 concepts
+• 2-week posting calendar with optimal times
+• Retargeting sequence recommendation
+
+RULES:
+- Every concept must reinforce our strategic positioning and differentiators from the system context.
+- No generic marketing language ("innovative," "cutting-edge," "solutions"). Use specific, concrete language grounded in our industry.
+- Each concept must address a different competitive angle or value pillar.
+- All claims must be defensible based on our actual differentiators.
+- Tone must be ${tone.toLowerCase()} throughout.`;
+    },
+
+    /* ── EMAIL OUTREACH ── */
+    'email': () => {
+      const recipient = g('recipient', 'target decision-maker');
+      const seqType = g('seqType', 'Cold outreach (5 emails)');
+      const offer = g('offer', 'a conversation about partnership');
+      const emailCount = seqType.match(/\d+/)?.[0] || '5';
+      return `${stratCtx}Write a ${seqType.toLowerCase()} email sequence for ${co}.
+
+RECIPIENT: ${recipient}
+OFFER/CTA: ${offer}
+SEQUENCE LENGTH: ${emailCount} emails
+
+For each email provide:
+1. Subject line (A and B variant)
+2. Body (under 120 words)
+3. CTA (specific, single action)
+4. Send timing (days after previous, best time of day)
+5. Personalization tokens [in brackets] for what to customize
+
+SEQUENCE ARC:
+- Email 1: Pattern interrupt — lead with an insight about their business, not about us
+- Email 2: Value drop — give them something useful for free (stat, framework, benchmark)
+- Email 3: Social proof — reference a specific result or case without sounding like a testimonial ad
+- Email 4: Competitive wedge — reframe their status quo as riskier than change
+- Final email: Direct ask with a specific, easy next step
+
+RULES:
+- No "just checking in," "hope you're well," "touching base," or "circling back."
+- Every email must deliver standalone value — if they only read one, it should still be useful.
+- All competitive framing must be grounded in our actual strategic position from the system context.
+- Tone: consultative and authoritative, never desperate or salesy.
+- The offer must be threaded naturally, not bolted on.`;
+    },
+
+    /* ── PRICING STRATEGY ── */
+    'pricing': () => {
+      const product = g('product', 'our core offering');
+      const priceContext = g('priceContext', 'current pricing');
+      const competitor = g('competitor', 'key competitors');
+      const objective = g('objective', 'optimize pricing');
+      return `${stratCtx}Develop a pricing strategy for ${co}.
+
+PRODUCT/SERVICE: ${product}
+CURRENT PRICING: ${priceContext}
+COMPETITOR PRICING: ${competitor}
+OBJECTIVE: ${objective}
+
+Provide:
+
+1. PRICING ARCHITECTURE
+   - Recommended tier structure (good / better / best or equivalent)
+   - Price points for each tier with rationale
+   - What's included vs. excluded at each level
+
+2. VALUE FRAMING
+   - How to present the price in terms of ROI, not cost
+   - Anchor pricing (what to compare against to make our price feel like a bargain)
+   - Cost-of-inaction calculation the sales team can use
+
+3. COMPETITIVE POSITIONING
+   - Price position map: where we sit vs. competitors and why
+   - Responses to "your competitor is cheaper" (grounded in our ERRC differentiation)
+   - When to compete on price vs. when to refuse
+
+4. IMPLEMENTATION
+   - Rollout plan (phase or launch all at once?)
+   - Grandfather policy for existing customers
+   - Discount policy and approval thresholds
+   - Metrics to track (price realization, discount depth, win rate by tier)
+
+RULES:
+- All pricing rationale must connect to our competitive positioning and differentiators from the system context.
+- Never recommend racing to the bottom. Our strategy is value-based, not volume-based (unless the system context explicitly says otherwise).
+- Include specific dollar amounts and percentages, not vague recommendations.`;
+    },
+
+    /* ── MARKETING PLAN ── */
+    'marketing-plan': () => {
+      const timeframe = g('timeframe', '90-day plan');
+      const budget = g('budget', 'moderate');
+      const focus = g('focus', 'growth');
+      const channels = g('channels', 'digital and direct');
+      return `${stratCtx}Build a ${timeframe.toLowerCase()} marketing plan for ${co}.
+
+BUDGET: ${budget}
+PRIMARY FOCUS: ${focus}
+CHANNELS: ${channels}
+
+Structure the plan as:
+
+1. EXECUTIVE SUMMARY (3 sentences max)
+   - Strategic thesis driving this plan
+   - Primary metric we're moving
+   - Expected outcome
+
+2. AUDIENCE SEGMENTS (prioritized)
+   - Primary segment with persona sketch
+   - Secondary segment
+   - Messaging angle for each (tied to our positioning)
+
+3. CHANNEL STRATEGY
+   - For each channel: objective, content type, frequency, budget allocation %
+   - Why this channel mix (grounded in where our audience actually is)
+
+4. CAMPAIGN CALENDAR
+   - Week-by-week activity plan
+   - Key milestones and decision points
+   - Content production deadlines
+
+5. MESSAGING FRAMEWORK
+   - Core message (1 sentence, from our positioning thesis)
+   - 3 supporting messages (from our ERRC Create/Raise moves)
+   - Proof points for each message
+   - Words/phrases to ALWAYS use
+   - Words/phrases to NEVER use
+
+6. METRICS & ACCOUNTABILITY
+   - Leading indicators (weekly check)
+   - Lagging indicators (monthly review)
+   - Kill criteria for underperforming channels
+   - Budget reallocation triggers
+
+RULES:
+- Every tactic must trace back to our strategic position. No "we should try TikTok because it's popular."
+- Be specific: named campaigns, actual copy themes, real budget numbers.
+- Marketing must reinforce our ERRC moves — invest in what we RAISE and CREATE, not what we ELIMINATE.`;
+    },
+
+    /* ── PIPELINE PLAN ── */
+    'pipeline': () => {
+      const target = g('target', 'growth target');
+      const timeframe = g('timeframe', 'This quarter');
+      const teamSize = g('teamSize', 'small team');
+      const currentState = g('currentState', 'current pipeline');
+      return `${stratCtx}Build a sales pipeline plan for ${co}.
+
+REVENUE TARGET: ${target}
+TIMEFRAME: ${timeframe}
+TEAM: ${teamSize}
+CURRENT STATE: ${currentState}
+
+Provide:
+
+1. PIPELINE MATH
+   - Required pipeline value (use 3x coverage ratio unless data suggests otherwise)
+   - Number of opportunities needed at each stage
+   - Required activity volume (calls, emails, meetings) to generate that pipeline
+   - Weekly activity targets per rep
+
+2. PROSPECTING STRATEGY
+   - Top 3 prospect sources ranked by expected conversion
+   - Ideal Customer Profile (ICP) criteria — who to pursue, who to skip
+   - Outreach cadence (touches per prospect, timing, channels)
+   - Qualifying criteria: minimum bar to enter pipeline (tied to our positioning)
+
+3. PIPELINE STAGES & EXIT CRITERIA
+   - Define 5-6 stages with clear, observable exit criteria
+   - Expected conversion rate between stages
+   - Maximum time allowed in each stage before escalation
+   - Red flags that signal a deal should be killed
+
+4. TERRITORY / ACCOUNT PLAN
+   - Account prioritization framework (A/B/C tiers)
+   - How to allocate time across tiers
+   - Named account strategy for top 10 targets
+
+5. WEEKLY RHYTHM
+   - Monday: what to review
+   - Daily: activity targets
+   - Friday: pipeline hygiene checklist
+   - Monthly: forecast review structure
+
+6. RISK MITIGATION
+   - Single-deal dependency thresholds
+   - Pipeline coverage health checks
+   - Contingency if pipeline falls below target
+
+RULES:
+- All pipeline guidance must be grounded in our competitive position — who we win against, who we lose to, and why.
+- Qualifying criteria must reflect our strategic differentiation, not generic BANT.
+- Be specific with numbers: if the team is 2 reps, show the math for 2 reps.`;
+    },
+
+    /* ── COMPETITIVE ANALYSIS ── */
+    'competitive': () => {
+      const competitor = g('competitor', 'primary competitor');
+      const analysisType = g('context', 'Full battle card');
+      const weaknesses = g('weaknesses', '');
+      return `${stratCtx}Create a ${analysisType.toLowerCase()} against ${competitor} for ${co}.
+
+COMPETITOR: ${competitor}
+ANALYSIS TYPE: ${analysisType}
+KNOWN WEAKNESSES: ${weaknesses || 'To be determined from analysis'}
+
+Provide:
+
+1. COMPETITOR PROFILE
+   - Business model and revenue drivers
+   - Target customer overlap with us
+   - Estimated market position and trajectory
+
+2. HEAD-TO-HEAD COMPARISON
+   - Where they beat us (be honest)
+   - Where we beat them (with proof points)
+   - Where it's a wash (and how to break the tie)
+
+3. STRATEGIC VULNERABILITIES
+   - What they can't do based on their business model
+   - Structural disadvantages (using Five Forces lens)
+   - Where our ERRC moves create uncatchable advantages
+
+4. OBJECTION RESPONSES (for sales team)
+   - "They're cheaper" → [specific counter]
+   - "They have more features" → [specific counter]
+   - "They're the market leader" → [specific counter]
+   - "We already use them" → [specific switch argument]
+   - "They gave us a better deal" → [specific response]
+
+5. WIN STRATEGY
+   - When to engage (ideal competitive scenarios)
+   - When to walk away (fights we can't win)
+   - How to position in a bake-off
+   - Champion coaching: what our internal champion should say to their boss
+
+6. COMPETITIVE MONITORING
+   - Key signals that they're in a deal
+   - Early warning indicators of competitive loss
+   - Proactive moves to pre-empt them
+
+RULES:
+- Never trash-talk the competitor. Position strategically, not emotionally.
+- Every competitive claim must be grounded in structural analysis from the system context, not opinion.
+- Be honest about where they're strong — credibility with the sales team depends on honesty.
+- Focus responses on our ERRC differentiators, not feature checklists.`;
+    },
+
+    /* ── BUILD AN OFFER ── */
+    'offer': () => {
+      const offerType = g('offerType', 'partnership package');
+      const recipient = g('recipient', 'target partner');
+      const hook = g('hook', 'core value hook');
+      const constraints = g('constraints', 'standard business constraints');
+      return `${stratCtx}Build a ${offerType.toLowerCase()} for ${co}.
+
+OFFER TYPE: ${offerType}
+TARGET RECIPIENT: ${recipient}
+KEY VALUE HOOK: ${hook}
+CONSTRAINTS: ${constraints}
+
+Provide:
+
+1. OFFER STRUCTURE
+   - Package name and positioning headline
+   - What's included (specific deliverables, features, services)
+   - What's explicitly excluded (set boundaries)
+   - Duration and terms
+
+2. VALUE PROPOSITION (recipient-facing)
+   - 1-sentence pitch
+   - 3 benefit statements (outcome-focused, not feature-focused)
+   - ROI calculation or value framework
+   - Risk reversal (guarantee, trial, pilot terms)
+
+3. PRICING & TERMS
+   - Recommended price point with margin analysis
+   - Payment structure (upfront, monthly, revenue share, hybrid)
+   - Volume incentives or scaling terms
+   - Early-adopter or launch pricing if applicable
+
+4. SALES ENABLEMENT
+   - One-page offer summary (formatted for email or PDF)
+   - 3 objection responses specific to this offer
+   - Qualifying questions: who should get this offer vs. who shouldn't
+   - Urgency mechanism (deadline, limited availability, or escalating price)
+
+5. IMPLEMENTATION CHECKLIST
+   - What happens after they say yes (first 30 days)
+   - Onboarding steps
+   - Success metrics and check-in schedule
+   - Renewal or expansion trigger
+
+RULES:
+- The offer must reinforce our strategic positioning — it should feel like it could ONLY come from us.
+- Value framing must use our ERRC "Create" moves as the differentiator — what they can't get elsewhere.
+- Constraints must be respected exactly as stated. Don't violate margin floors or exclusivity limits.
+- The offer must be immediately executable — no vague "we'll figure out the details later."`;
+    },
+
+    /* ── CUSTOM ── */
+    'custom': () => {
+      const request = g('request', '');
+      if (!request) return 'Enter your request in the field and click Generate.';
+      return `${stratCtx}${request}
+
+RULES:
+- All output must align with the strategic positioning, competitive analysis, and differentiation described in the system context above.
+- Be specific to the industry and company described. No generic frameworks — actionable, ready-to-use output.
+- Structure your response with clear headers and organized sections.
+- Every recommendation must be grounded in the competitive landscape and strategic moves defined above.`;
+    },
+  };
+
+  const gen = generators[catId];
+  return gen ? gen() : 'Select a category to generate a prompt.';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   UTILITY FUNCTIONS
+   ══════════════════════════════════════════════════════════════ */
+
+function esc(str) {
+  if (!str) return '';
+  const el = document.createElement('div');
+  el.textContent = str;
+  return el.innerHTML;
+}
+
+function hasMinimalContext() {
+  return state.context.companyName.trim().length > 0 || state.context.industry.trim().length > 0;
+}
+
+function completeStep(stepId) {
+  state.stepsCompleted[stepId] = true;
+  saveState();
+}
+
+function copyPrompt() {
+  const el = document.getElementById('prompt-output');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => showToast());
+}
+
+function downloadPrompt() {
+  const el = document.getElementById('prompt-output');
+  if (!el) return;
+  const catObj = PROMPT_CATEGORIES.find(c => c.id === state.activePromptCat);
+  const filename = `${(state.context.companyName || 'porter').replace(/\s+/g, '_')}_${state.activePromptCat || 'prompt'}.txt`;
+  const blob = new Blob([el.textContent], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function showToast() {
+  const toast = document.getElementById('copy-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function exportSnapshot() {
+  const snapshot = buildStrategicContext();
+  navigator.clipboard.writeText(snapshot).then(() => showToast());
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════ */
+navigateTo(state.currentPage);
+</script>
+
+</body>
+</html>

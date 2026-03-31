@@ -578,7 +578,17 @@ body { font-family: var(--sans); background: var(--bg-base); color: var(--text-p
 <div class="toast hidden" id="toast"></div>
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
-// DATA MODEL — #8 role-based activity targets
+// ██████████████████████████████████████████████████████████████████████████████
+//
+//  SALESCOMMANDER — MAIN APPLICATION
+//  Single-file HTML/JS sales operating system
+//  Cleanup pass: 2026-03-31
+//
+// ██████████████████████████████████████████████████████████████████████████████
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA MODEL — Constants, dummy data, role targets
 // ═══════════════════════════════════════════════════════════════════════════════
 const ROLE_TARGETS = {
   "Enterprise AE": { calls:60, meetings:15, emails:150, demos:8, proposals:5 },
@@ -616,9 +626,11 @@ const REPS = [
 ];
 
 // #3 — Closed Won deals added per rep so closed revenue derives from DEALS
+// CLEANUP: Every deal now carries a `channel` flag ('dealer' | 'designer' | 'direct').
+// Defaults to 'dealer'. Used for future dealer vs designer channel segmentation.
 const DEALS = [
   // OPEN
-  { id:1, company:"Meridian Healthcare", value:285000, stage:"Negotiation", rep:"Marcus Webb", probability:85, daysInStage:8, nextAction:"Contract review call", due:"Tomorrow", risk:"low", lastActivity:"Today", champion:"VP Operations", decisionDate:"Mar 25", notes:"Legal reviewing MSA. Champion confirmed budget approval.", pain:"Manual compliance tracking costing 200+ hours/quarter", impact:"$1.2M annual savings projected", budgetRange:"$250K–$300K approved", economicBuyer:"CFO Maria Torres", decisionProcess:"CFO + VP Ops sign-off, legal review", decisionTimeline:"By end of March", sandlerChampion:"VP Operations confirmed", mutualNextStep:"Contract review call scheduled Mar 12" },
+  { id:1, channel:'dealer', company:"Meridian Healthcare", value:285000, stage:"Negotiation", rep:"Marcus Webb", probability:85, daysInStage:8, nextAction:"Contract review call", due:"Tomorrow", risk:"low", lastActivity:"Today", champion:"VP Operations", decisionDate:"Mar 25", notes:"Legal reviewing MSA. Champion confirmed budget approval.", pain:"Manual compliance tracking costing 200+ hours/quarter", impact:"$1.2M annual savings projected", budgetRange:"$250K–$300K approved", economicBuyer:"CFO Maria Torres", decisionProcess:"CFO + VP Ops sign-off, legal review", decisionTimeline:"By end of March", sandlerChampion:"VP Operations confirmed", mutualNextStep:"Contract review call scheduled Mar 12" },
   { id:2, company:"Atlas Manufacturing", value:192000, stage:"Proposal", rep:"Sarah Chen", probability:60, daysInStage:12, nextAction:"Send revised proposal", due:"Today", risk:"medium", lastActivity:"3 days ago", champion:"Director of IT", decisionDate:"Mar 28", notes:"Proposal overdue. Competitor reportedly in final stages.", pain:"Legacy system causing 3-day order delays", impact:"Revenue loss estimated at $500K/year", budgetRange:"$150K–$200K discussed", economicBuyer:"", decisionProcess:"IT Director + Procurement committee", decisionTimeline:"End of Q1", sandlerChampion:"Director of IT (weak — no exec access)", mutualNextStep:"" },
   { id:3, company:"Pinnacle Logistics", value:340000, stage:"Discovery", rep:"James O'Brien", probability:30, daysInStage:5, nextAction:"Technical deep-dive", due:"Mar 14", risk:"medium", lastActivity:"Yesterday", champion:"CTO", decisionDate:"Apr 15", notes:"Large opportunity but early stage. Multiple stakeholders.", pain:"Supply chain visibility gaps causing late shipments", impact:"", budgetRange:"", economicBuyer:"", decisionProcess:"", decisionTimeline:"", sandlerChampion:"CTO (initial contact only)", mutualNextStep:"" },
   { id:4, company:"Vertex Financial", value:156000, stage:"Negotiation", rep:"Marcus Webb", probability:90, daysInStage:3, nextAction:"Legal review", due:"Mar 13", risk:"low", lastActivity:"Today", champion:"CFO", decisionDate:"Mar 18", notes:"Verbal commit received. Standard procurement process.", pain:"Regulatory reporting taking 2 full weeks per cycle", impact:"Risk of compliance fines; $800K exposure", budgetRange:"$140K–$160K approved by CFO", economicBuyer:"CFO David Kim", decisionProcess:"CFO approval + legal sign-off", decisionTimeline:"This week", sandlerChampion:"CFO David Kim (strong)", mutualNextStep:"Legal review and MSA signature by Mar 18" },
@@ -694,20 +706,36 @@ const PAGE_TITLES = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// #3 — DERIVED DATA HELPERS
+// HELPER FUNCTIONS — shared utilities used throughout the app
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// — Formatting helpers —
 const fmt = n => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`;
 const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-const escapeHTML = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escapeHTML = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+// — Toast notifications —
+function showToast(msg) { const e=document.getElementById('toast'); e.textContent='✓ '+msg; e.style.background='var(--green)'; e.classList.remove('hidden'); setTimeout(()=>e.classList.add('hidden'),3000); }
+function showToastError(msg) { const e=document.getElementById('toast'); e.textContent='✕ '+msg; e.style.background='var(--red)'; e.classList.remove('hidden'); setTimeout(()=>{e.classList.add('hidden');e.style.background='';},4500); }
+
+// — Badge / tag / avatar builders —
+function makeBadge(t, tp) { return `<span class="badge badge-${tp}">${t}</span>`; }
+function makeStageTag(s) { const c=STAGE_COLORS[s]||'#556478'; return `<span class="stage-tag" style="background:${c}1a;color:${c}">${s}</span>`; }
+function makeSeverityBadge(sev) { const m={critical:'red',high:'orange',medium:'yellow',low:'blue'}, l={critical:'Critical',high:'High',medium:'Medium',low:'Low'}; return makeBadge(l[sev]||sev,m[sev]||'muted'); }
+function makeAvatar(r,lg) { return `<div class="avatar${lg?' avatar-lg':''}" style="background:${r.color}">${r.initials}</div>`; }
+function makeProgress(v, mx, c) { return `<div class="progress"><div class="progress-fill" style="width:${clamp(pct(v,mx),0,100)}%;background:${c||'var(--accent)'}"></div></div>`; }
+
+// — Derived data helpers (rep metrics from DEALS) —
 function getRepClosed(name) { return DEALS.filter(d => d.rep === name && d.stage === 'Closed Won').reduce((a,d) => a+d.value, 0); }
 function getRepPipeline(name) { return DEALS.filter(d => d.rep === name && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost').reduce((a,d) => a+d.value, 0); }
 function getRepWinRate(name) { const w=DEALS.filter(d=>d.rep===name&&d.stage==='Closed Won').length, l=DEALS.filter(d=>d.rep===name&&d.stage==='Closed Lost').length; return (w+l)>0?Math.round(w/(w+l)*100):0; }
 function getRepTargets(r) { return ROLE_TARGETS[r.role] || ROLE_TARGETS["SDR"]; }
 function repColor(r) { const p=pct(getRepClosed(r.name),r.quota); return p>=80?'var(--green)':p>=50?'var(--accent)':'var(--red)'; }
 
-function makeProgress(v, mx, c) { return `<div class="progress"><div class="progress-fill" style="width:${clamp(pct(v,mx),0,100)}%;background:${c||'var(--accent)'}"></div></div>`; }
+// — Modal helpers —
+function openModal(n){document.getElementById(n+'Modal').classList.remove('hidden');}
+function closeModal(n){document.getElementById(n+'Modal').classList.add('hidden');}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SANDLER QUALIFICATION ENGINE
@@ -760,11 +788,10 @@ function advanceDealStage(dealId) {
   d.stage = nextStage;
   d.daysInStage = 0;
   alerts = generateAlerts();
+  saveState(); // CLEANUP: persist stage advance
   showToast(d.company + ' advanced to ' + nextStage);
   buildNav(); render();
 }
-function showToastError(msg) { const e=document.getElementById('toast'); e.textContent='✕ '+msg; e.style.background='var(--red)'; e.classList.remove('hidden'); setTimeout(()=>{e.classList.add('hidden');e.style.background='';},4500); }
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // SANDLER FIELD EDIT / VIEW POPOVERS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -889,6 +916,7 @@ function sandlerSave(dealId, fieldKey) {
   d[fieldKey] = ta.value.trim();
   sandlerClosePop();
   alerts = generateAlerts();
+  saveState(); // CLEANUP: persist Sandler field edits
   buildNav();
   render();
   showToast((SANDLER_FIELD_LABELS[fieldKey] || fieldKey) + ' updated — ' + d.company);
@@ -1253,6 +1281,7 @@ function saveDiscoveryAnswer(dealId, field) {
   if (!ta || !ta.value.trim()) return;
   var intel = getAccountIntel(dealId);
   intel[field] = ta.value.trim();
+  saveState(); // CLEANUP: persist discovery answer
   showToast(INTEL_FIELD_LABELS[field] + ' captured');
   render();
 }
@@ -1417,6 +1446,7 @@ function skipDiscoveryQuestion(dealId, field) {
   var intel = getAccountIntel(dealId);
   // Mark as skipped with a placeholder so it doesn't block prereqs
   intel[field] = '(skipped)';
+  saveState(); // CLEANUP: persist skip
   render();
 }
 
@@ -1860,11 +1890,6 @@ function renderPipelineCopilot(d) {
     +'</div></div>';
 }
 
-function makeBadge(t, tp) { return `<span class="badge badge-${tp}">${t}</span>`; }
-function makeStageTag(s) { const c=STAGE_COLORS[s]||'#556478'; return `<span class="stage-tag" style="background:${c}1a;color:${c}">${s}</span>`; }
-function makeSeverityBadge(sev) { const m={critical:'red',high:'orange',medium:'yellow',low:'blue'}, l={critical:'Critical',high:'High',medium:'Medium',low:'Low'}; return makeBadge(l[sev]||sev,m[sev]||'muted'); }
-function makeAvatar(r,lg) { return `<div class="avatar${lg?' avatar-lg':''}" style="background:${r.color}">${r.initials}</div>`; }
-
 // #1 — Role helpers
 function getVisibleReps() { return state.role==='rep' ? REPS.filter(r=>r.id===state.repViewAs) : REPS; }
 
@@ -1876,9 +1901,10 @@ function generateAlerts() {
   REPS.forEach(r => {
     const t = getRepTargets(r), actPct = t.calls > 0 ? r.calls/t.calls : 1;
     const closed = getRepClosed(r.name), pipeline = getRepPipeline(r.name), cov = r.quota>0?pipeline/r.quota:0, qp = pct(closed,r.quota);
-    if (actPct < 0.75) g.push({id:nid++, severity:"critical", icon:"⚠", msg:`${r.name} activity trending ${Math.round((1-actPct)*100)}% below call target (${r.calls} vs ${t.calls})`, time:"Auto-detected", owner:r.name, impact:`${fmt(r.quota)} quota at risk`, action:"Schedule 1:1", actionType:"scorecard", actionTarget:r.id});
-    if (cov < 2.0) g.push({id:nid++, severity:"high", icon:"🔴", msg:`${r.name} pipeline coverage at ${cov.toFixed(1)}x — below 2.0x minimum`, time:"Auto-detected", owner:r.name, impact:"Forecast gap risk", action:"View scorecard", actionType:"scorecard", actionTarget:r.id});
-    if (qp >= 85) g.push({id:nid++, severity:"low", icon:"🎯", msg:`${r.name} at ${qp}% quota with 3 weeks left — on pace to overachieve`, time:"Auto-detected", owner:r.name, impact:"Upside potential", action:"View scorecard", actionType:"scorecard", actionTarget:r.id});
+    // CLEANUP: all alert messages now consistently use escapeHTML()
+    if (actPct < 0.75) g.push({id:nid++, severity:"critical", icon:"⚠", msg:`${escapeHTML(r.name)} activity trending ${Math.round((1-actPct)*100)}% below call target (${r.calls} vs ${t.calls})`, time:"Auto-detected", owner:r.name, impact:`${fmt(r.quota)} quota at risk`, action:"Schedule 1:1", actionType:"scorecard", actionTarget:r.id});
+    if (cov < 2.0) g.push({id:nid++, severity:"high", icon:"🔴", msg:`${escapeHTML(r.name)} pipeline coverage at ${cov.toFixed(1)}x — below 2.0x minimum`, time:"Auto-detected", owner:r.name, impact:"Forecast gap risk", action:"View scorecard", actionType:"scorecard", actionTarget:r.id});
+    if (qp >= 85) g.push({id:nid++, severity:"low", icon:"🎯", msg:`${escapeHTML(r.name)} at ${qp}% quota with 3 weeks left — on pace to overachieve`, time:"Auto-detected", owner:r.name, impact:"Upside potential", action:"View scorecard", actionType:"scorecard", actionTarget:r.id});
   });
   DEALS.forEach(d => {
     if (d.stage==='Closed Won'||d.stage==='Closed Lost') return;
@@ -1906,13 +1932,50 @@ function generateAlerts() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STATE
+// STATE & PERSISTENCE
+// localStorage persistence for DEALS, COACHING_NOTES, and accountIntelligence.
+// Call saveState() after every data mutation. loadState() called at init.
 // ═══════════════════════════════════════════════════════════════════════════════
+const SC_STORAGE_KEY = 'salesCommander_v1';
 
+function saveState() {
+  try {
+    localStorage.setItem(SC_STORAGE_KEY, JSON.stringify({
+      deals: DEALS,
+      coachingNotes: COACHING_NOTES,
+      accountIntelligence: state.accountIntelligence,
+    }));
+  } catch(e) { /* quota exceeded or private mode — fail silently */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SC_STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    // Restore DEALS if present (merge IDs to avoid duplication with dummy data)
+    if (saved.deals && Array.isArray(saved.deals) && saved.deals.length > 0) {
+      DEALS.length = 0;
+      saved.deals.forEach(d => DEALS.push(d));
+    }
+    // Restore COACHING_NOTES if present
+    if (saved.coachingNotes && Array.isArray(saved.coachingNotes)) {
+      COACHING_NOTES.length = 0;
+      saved.coachingNotes.forEach(n => COACHING_NOTES.push(n));
+    }
+    // Restore accountIntelligence
+    if (saved.accountIntelligence) {
+      Object.assign(state.accountIntelligence, saved.accountIntelligence);
+    }
+  } catch(e) { /* parse error — start fresh */ }
+}
 
 let state = { page:'dashboard', role:'manager', selectedRep:null, selectedDeal:null, dealFilter:'All', alertFilter:'all', aiContext:null, repViewAs:1, chatMessages:[
   {role:"ai",text:`I'm your <b>AI Sales Manager</b>. I have full visibility into your team's pipeline, activity, deals, and forecast.\n\nTry: <i>"Morning briefing"</i> · <i>"Analyze Tom"</i> · <i>"Coaching priorities"</i> · <i>"Prepare 1:1 for Sarah"</i>`}
 ], chatTyping:false, copilotChats:{}, copilotTyping:false, copilotApiKey:'', copilotTabs:{}, accountIntelligence:{} };
+
+// Load persisted data before generating alerts
+loadState();
 
 let alerts = generateAlerts();
 
@@ -1969,7 +2032,7 @@ function renderDealDetail(d) {
       <div class="detail-row"><span class="detail-key">Next Action</span><span class="detail-val">${escapeHTML(d.nextAction)}</span></div>
       <div class="detail-row"><span class="detail-key">Due</span><span class="detail-val">${escapeHTML(d.due)}</span></div>
       ${d.lossReason?`<div class="detail-row"><span class="detail-key">Loss Reason</span><span class="detail-val text-red">${escapeHTML(d.lossReason)}</span></div>`:''}</div>
-      </div><div class="detail-section mt-sm"><div class="detail-section-title">Notes</div><div class="detail-notes">${escapeHTML(d.notes)}</div></div>${renderSandlerPanel(d)}</div></div>`;      
+      </div><div class="detail-section mt-sm"><div class="detail-section-title">Notes</div><div class="detail-notes">${escapeHTML(d.notes)}</div></div>${renderSandlerPanel(d)}${renderProspectProfile(d)}</div></div>`;      
 }
 
 function selectDeal(id) { state.selectedDeal=state.selectedDeal===id?null:id; const d=DEALS.find(x=>x.id===id); if(d) state.aiContext={type:'deal',id:d.id,name:d.company}; render(); }
@@ -2008,6 +2071,32 @@ function renderSandlerPanel(d) {
     </div>
   </div>`;
 }
+// CLEANUP: Prospect Profile — surfaces prospectSetup data in deal detail
+function renderProspectProfile(d) {
+  if (!d.prospectSetup) return '';
+  const ps = d.prospectSetup;
+  // Only show if at least one field has data
+  const fields = [
+    ['Store Count', ps.storeCount],
+    ['Corporate Structure', ps.corporateStructure],
+    ['Geography', ps.geography],
+    ['Growth Market', ps.growthMarketFlag],
+    ['Performance Group', ps.performanceGroup],
+    ['Program Reputation', ps.programReputationSignal],
+    ['Merchandising Quality', ps.merchandisingQuality],
+    ['Access Quality', ps.accessQuality],
+    ['Channel', d.channel || 'dealer'],
+  ];
+  const populated = fields.filter(f => f[1] && String(f[1]).trim());
+  if (populated.length === 0) return '';
+  let rows = populated.map(f => `<div class="detail-row"><span class="detail-key">${f[0]}</span><span class="detail-val">${escapeHTML(String(f[1]))}</span></div>`).join('');
+  let notes = ps.initialResearchNotes ? `<div style="margin-top:8px"><div class="detail-section-title">Research Notes</div><div class="detail-notes">${escapeHTML(ps.initialResearchNotes)}</div></div>` : '';
+  return `<div class="detail-section mt-sm" style="border-top:1px solid var(--border-subtle);padding-top:14px">
+    <div class="detail-section-title">🏢 Prospect Profile</div>
+    ${rows}${notes}
+  </div>`;
+}
+
 function selectRepScorecard(id) { state.selectedRep=id; state.selectedDeal=null; const r=REPS.find(x=>x.id===id); if(r) state.aiContext={type:'rep',id:r.id,name:r.name}; navigate('scorecards'); }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2057,9 +2146,12 @@ function renderForecast() {
   const reps=getVisibleReps(), tQ=reps.reduce((a,r)=>a+r.quota,0), tC=reps.reduce((a,r)=>a+getRepClosed(r.name),0);
   const cm=reps.reduce((a,r)=>a+r.forecast_commit,0), bs=reps.reduce((a,r)=>a+r.forecast_best,0), up=reps.reduce((a,r)=>a+r.forecast_upside,0), gap=tQ-cm,pcm=reps.reduce((a,r)=>a+(r.forecast_prior_commit||r.forecast_commit),0), teamDelta=cm-pcm; 
   
-  let hdr=`<div class="panel mb-md"><div class="panel-body"><div class="grid-2" style="margin:0"><div><div class="kpi-label">Team Quota — Q1 2026</div><div class="kpi-value" style="font-size:28px">${fmt(tQ)}</div><div class="kpi-sub mt-sm">${fmt(tC)} closed · ${fmt(gap>0?gap:0)} remaining gap</div><div class="mt-sm">${makeProgress(tC,tQ,tC>=tQ?'var(--green)':'var(--accent)')}</div></div><div class="forecast-grid-4"><div class="forecast-category" style="border-right:1px solid var(--border-subtle)"><div class="forecast-label">Commit</div><div class="forecast-value text-green">${fmt(cm)}</div><div class="forecast-sub">${pct(cm,tQ)}%</div></div><div class="forecast-category" style="border-right:1px solid var(--border-subtle)"><div class="forecast-label">Best Case</div><div class="forecast-value text-accent">${fmt(bs)}</div><div class="forecast-sub">${pct(bs,tQ)}%</div></div><div class="forecast-category" style="border-right:1px solid var(--border-subtle)"><div class="forecast-label">Upside</div><div class="forecast-value text-yellow">${fmt(up)}</div><div class="forecast-sub">${pct(up,tQ)}%</div></div><div class="forecast-category"><div class="forecast-label">WoW Δ Commit</div><div class="forecast-value"style="color:${teamDelta>0?'var(--green)':teamDelta<0?'var(--red)':'var(--text-muted)'}">${teamDelta>0?'+':''}${fmt(Math.abs(teamDelta))}</div><div class="forecast-sub">vs last week</div></div></div></div></div></div>`;
+  let hdr=`<div class="panel mb-md"><div class="panel-body"><div class="grid-2" style="margin:0"><div><div class="kpi-label">Team Quota — Q1 2026</div><div class="kpi-value" style="font-size:28px">${fmt(tQ)}</div><div class="kpi-sub mt-sm">${fmt(tC)} closed · ${fmt(gap>0?gap:0)} remaining gap</div><div class="mt-sm">${makeProgress(tC,tQ,tC>=tQ?'var(--green)':'var(--accent)')}</div></div><div class="forecast-grid-4"><div class="forecast-category" style="border-right:1px solid var(--border-subtle)"><div class="forecast-label">Commit</div><div class="forecast-value text-green">${fmt(cm)}</div><div class="forecast-sub">${pct(cm,tQ)}%</div></div><div class="forecast-category" style="border-right:1px solid var(--border-subtle)"><div class="forecast-label">Best Case</div><div class="forecast-value text-accent">${fmt(bs)}</div><div class="forecast-sub">${pct(bs,tQ)}%</div></div><div class="forecast-category" style="border-right:1px solid var(--border-subtle)"><div class="forecast-label">Upside</div><div class="forecast-value text-yellow">${fmt(up)}</div><div class="forecast-sub">${pct(up,tQ)}%</div></div><div class="forecast-category"><!-- CLEANUP: WoW delta uses static prior_commit seed data — not live week-over-week tracking. -->
+<!-- Will become dynamic once backend provides historical snapshots. -->
+<div class="forecast-label">WoW Δ Commit</div><div class="forecast-value"style="color:${teamDelta>0?'var(--green)':teamDelta<0?'var(--red)':'var(--text-muted)'}">${teamDelta>0?'+':''}${fmt(Math.abs(teamDelta))}</div><div class="forecast-sub">vs prior commit (static seed)</div></div></div></div></div></div>`;
   let rr=reps.map(r=>{const cl=getRepClosed(r.name),cp=pct(r.forecast_commit,r.quota),c=cp>=90?'var(--green)':cp>=70?'var(--accent)':'var(--red)',rk=cp<70?makeBadge('At Risk','red'):cp<90?makeBadge('Watch','yellow'):makeBadge('On Track','green'),delta=r.forecast_commit-(r.forecast_prior_commit||r.forecast_commit), dc=delta>0?'var(--green)':delta<0?'var(--red)':'var(--text-muted)',ds=delta>0?'+':''; return`<tr class="clickable" onclick="selectRepScorecard(${r.id})"><td><div class="rep-cell">${makeAvatar(r)}<div><div class="rep-name">${r.name}</div><div class="rep-role">${r.role}</div></div></div></td><td class="mono">${fmt(r.quota)}</td><td class="mono">${fmt(cl)}</td><td class="mono text-green">${fmt(r.forecast_commit)}</td><td class="mono text-accent">${fmt(r.forecast_best)}</td><td class="mono text-yellow">${fmt(r.forecast_upside)}</td><td class="mono" style="color:${dc}">${ds}${fmt(Math.abs(delta))}</td><td><div class="progress-row">${makeProgress(r.forecast_commit,r.quota,c)}<span class="progress-label">${cp}%</span></div></td><td>${rk}</td></tr>`;}).join('');
-  return hdr+`<div class="panel"><div class="panel-header"><span class="panel-title">Forecast by Rep</span><span class="panel-meta">WoW = week-over-week commit change</span></div><div class="panel-body flush" style="overflow-x:auto"><table class="data-table" style="min-width:820px"><thead><tr><th>Rep</th><th>Quota</th><th>Closed</th><th>Commit</th><th>Best</th><th>Upside</th><th>WoW Δ</th><th>Commit%</th><th>Risk</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
+  return hdr+`<div class="panel"><div class="panel-header"><span class="panel-title">Forecast by Rep</span><!-- CLEANUP: WoW column uses static seed delta, not live tracking -->
+<span class="panel-meta">WoW Δ = vs prior commit (static seed data)</span></div><div class="panel-body flush" style="overflow-x:auto"><table class="data-table" style="min-width:820px"><thead><tr><th>Rep</th><th>Quota</th><th>Closed</th><th>Commit</th><th>Best</th><th>Upside</th><th>WoW Δ</th><th>Commit%</th><th>Risk</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2341,8 +2433,7 @@ function scrollChat(){setTimeout(()=>{const e=document.getElementById('chatMessa
 // ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 function dismissAlert(id){const a=alerts.find(x=>x.id===id);if(a) a.dismissed=true;buildNav();render();}
-function openModal(n){document.getElementById(n+'Modal').classList.remove('hidden');}
-function closeModal(n){document.getElementById(n+'Modal').classList.add('hidden');}
+// openModal/closeModal moved to HELPERS section
 function openComposeFor(v){openModal('compose');setTimeout(()=>{const s=document.getElementById('composeTo');if(s){const r=REPS.find(x=>typeof v==='number'?x.id===v:x.name===v);s.value=r?r.name:v;}},50);}
 
 
@@ -2356,10 +2447,11 @@ function sendCompose(){
   
   if(to==='all') REPS.forEach(r=>{COACHING_NOTES.push({id:Date.now()+r.id,rep:r.name,date:dt,note:san,author:"You",type:tp});});
   else COACHING_NOTES.push({id:Date.now(),rep:to,date:dt,note:san,author:"You",type:tp});
+  saveState(); // CLEANUP: persist coaching notes
   document.getElementById('composeMsg').value='';document.getElementById('composeTo').value='';
   showToast(`${tp[0].toUpperCase()+tp.slice(1)} sent to ${to==='all'?'entire team':to}`);closeModal('compose');render();
 }
-function showToast(msg){const e=document.getElementById('toast');e.textContent='✓ '+msg;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),3000);}
+// showToast/showToastError moved to HELPERS section at top of <script>
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELP PAGE
@@ -2526,6 +2618,7 @@ function saveNewProspect() {
   // Deal execution fields — root level (drives pipeline card and deal table)
   var newDeal = {
     id:           tempId,
+    channel:      'dealer', // CLEANUP: default channel flag — will support 'designer' and 'direct' in future
     company:      company,
     value:        Number(valueRaw),
     stage:        stage,
@@ -2559,6 +2652,7 @@ function saveNewProspect() {
   // Insert into live DEALS array, regenerate derived state, re-render
   DEALS.push(newDeal);
   alerts = generateAlerts();
+  saveState(); // CLEANUP: persist new prospect
   closeAddProspect();
   showToast(company + ' added to ' + stage);
   buildNav();
